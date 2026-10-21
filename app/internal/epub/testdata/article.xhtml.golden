@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en-GB" lang="en-GB">
+<head>
+<meta charset="utf-8"/>
+<title>Reading &amp; &quot;Writing&quot; &lt;Offline&gt;</title>
+<link rel="stylesheet" type="text/css" href="style.css"/>
+</head>
+<body>
+<header class="front-matter">
+<h1>Reading &amp; &quot;Writing&quot; &lt;Offline&gt;</h1>
+<p class="byline">Ada Lovelace</p>
+<p class="meta">Example Blog · 14 March 2026</p>
+<p class="source"><a href="https://blog.example.com/posts/reading">https://blog.example.com/posts/reading</a><br/>Saved 20 October 2026</p>
+</header>
+<hr/>
+<main>
+<div>
+<p>First paragraph with a <a href="https://blog.example.com/about">relative link</a>, a <a>script link</a> and an <a href="mailto:ada@example.com">email</a>.</p>
+
+
+<figure><img src="images/001.jpg" alt="A photo"/><figcaption>Caption</figcaption></figure>
+<p>Text after a missing image.</p>
+<p>Unknown <b>tags</b> are unwrapped.</p>
+<p>Control characters vanish.<br/>Line two.</p>
+<table><tbody><tr><th colspan="2">Head</th></tr><tr><td>a</td><td>b</td></tr></tbody></table>
+<ol start="3"><li>three</li></ol>
+</div>
+</main>
+</body>
+</html>

@@ -1,0 +1,36 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*.*.*"]
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: flox/install-flox-action@v2
+      - name: Test
+        run: flox activate -- bash -c 'cd app && go test ./...'
+      - name: Publish image
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          KO_DOCKER_REPO: ghcr.io/${{ github.repository }}
+        run: |
+          flox activate -- bash -c '
+            cd app
+            ko login ghcr.io --username "${{ github.actor }}" --password "$GITHUB_TOKEN"
+            ko build --bare \
+              --tags "${GITHUB_REF_NAME},latest" \
+              --image-label "org.opencontainers.image.source=https://github.com/${{ github.repository }}" \
+              --image-label "org.opencontainers.image.version=${GITHUB_REF_NAME}" \
+              ./cmd/url2supernote
+          '
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" --verify-tag --generate-notes

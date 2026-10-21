@@ -1,0 +1,19 @@
+schema-version = "1.16.0"
+
+[install]
+go.pkg-path = "go"
+gopls.pkg-path = "gopls"
+golangci-lint.pkg-path = "golangci-lint"
+gofumpt.pkg-path = "gofumpt"
+ko.pkg-path = "ko"
+opentofu.pkg-path = "opentofu"
+tflint.pkg-path = "tflint"
+google-cloud-sdk.pkg-path = "google-cloud-sdk"
+lima.pkg-path = "lima"
+docker.pkg-path = "docker"
+
+[vars]
+GOTOOLCHAIN = "local"
+
+[options]
+systems = ["aarch64-darwin", "aarch64-linux", "x86_64-linux"]

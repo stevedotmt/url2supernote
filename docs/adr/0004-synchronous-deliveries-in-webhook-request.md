@@ -1,0 +1,3 @@
+# Deliveries run synchronously inside the webhook request
+
+Each Delivery runs to completion inside the Telegram webhook request, and the response is always 200, with outcomes reported back through Bot API messages. Cloud Run throttles CPU to near zero once a response is sent, so replying early and finishing in the background stalls unless we pay for always-allocated CPU or add Cloud Tasks, neither of which a single Owner's volume justifies. If Telegram retries a slow request anyway, the filename duplicate check turns the retry into a *duplicate* outcome instead of a second file, so do not add a queue or an early reply without revisiting both.

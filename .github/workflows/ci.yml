@@ -1,0 +1,38 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  app:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: flox/install-flox-action@v2
+      - name: go mod tidy
+        run: flox activate -- bash -c 'cd app && go mod tidy -diff'
+      - name: Lint
+        run: flox activate -- bash -c 'cd app && golangci-lint run ./...'
+      - name: Test
+        run: flox activate -- bash -c 'cd app && go test -race ./...'
+      - name: Build image
+        run: flox activate -- bash -c 'cd app && KO_DOCKER_REPO=ghcr.io/${{ github.repository }} ko build --bare --push=false ./cmd/url2supernote'
+
+  infra:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: flox/install-flox-action@v2
+      - name: Format
+        run: flox activate -- bash -c 'cd infra && tofu fmt -check -recursive'
+      - name: Validate
+        run: flox activate -- bash -c 'cd infra/gcp && tofu init -backend=false -input=false && tofu validate'
+      - name: Lint
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: flox activate -- bash -c 'cd infra/gcp && tflint --init && tflint'

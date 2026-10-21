@@ -1,0 +1,63 @@
+body {
+  font-family: serif;
+  line-height: 1.5;
+  margin: 0 1em;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  line-height: 1.2;
+}
+
+.front-matter h1 {
+  margin-bottom: 0.3em;
+}
+
+.front-matter p {
+  margin: 0.2em 0;
+}
+
+.byline {
+  font-style: italic;
+}
+
+.meta, .source {
+  font-size: 0.85em;
+}
+
+.source a {
+  word-break: break-all;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+figure {
+  margin: 1em 0;
+}
+
+figcaption {
+  font-size: 0.85em;
+  font-style: italic;
+}
+
+pre {
+  white-space: pre-wrap;
+  font-size: 0.85em;
+}
+
+blockquote {
+  margin-left: 1em;
+  padding-left: 0.8em;
+  border-left: 2px solid #000;
+}
+
+table {
+  border-collapse: collapse;
+}
+
+td, th {
+  border: 1px solid #000;
+  padding: 0.2em 0.4em;
+}

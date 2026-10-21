@@ -1,0 +1,6 @@
+terraform {
+  backend "gcs" {
+    bucket = "my-url2supernote-tofu-state"
+    prefix = "url2supernote"
+  }
+}

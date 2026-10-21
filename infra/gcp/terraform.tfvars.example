@@ -1,0 +1,5 @@
+project_id             = "my-url2supernote"
+region                 = "us-central1"
+image_tag              = "v0.1.0"
+telegram_owner_chat_id = "123456789"
+google_client_id       = "1234567890-abc.apps.googleusercontent.com"

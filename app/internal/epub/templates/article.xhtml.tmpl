@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="{{x .Language}}" lang="{{x .Language}}">
+<head>
+<meta charset="utf-8"/>
+<title>{{x .Title}}</title>
+<link rel="stylesheet" type="text/css" href="style.css"/>
+</head>
+<body>
+<header class="front-matter">
+<h1>{{x .Title}}</h1>
+{{- if .Byline}}
+<p class="byline">{{x .Byline}}</p>
+{{- end}}
+<p class="meta">{{x .Site}}{{if .PublishedOn}} · {{x .PublishedOn}}{{end}}</p>
+<p class="source"><a href="{{x .URL}}">{{x .URL}}</a><br/>Saved {{x .SavedOn}}</p>
+</header>
+<hr/>
+<main>
+{{.Body}}
+</main>
+</body>
+</html>

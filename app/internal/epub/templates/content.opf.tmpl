@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<package xmlns="http://www.idpf.org/2007/opf" version="3.0" unique-identifier="uid" xml:lang="{{x .Language}}">
+  <metadata xmlns:dc="http://purl.org/dc/elements/1.1/">
+    <dc:identifier id="uid">{{x .Identifier}}</dc:identifier>
+    <dc:title>{{x .Title}}</dc:title>
+    <dc:language>{{x .Language}}</dc:language>
+{{- if .Byline}}
+    <dc:creator>{{x .Byline}}</dc:creator>
+{{- end}}
+    <dc:publisher>{{x .Site}}</dc:publisher>
+    <dc:source>{{x .URL}}</dc:source>
+{{- if .Published}}
+    <dc:date>{{x .Published}}</dc:date>
+{{- end}}
+    <meta property="dcterms:modified">{{x .Modified}}</meta>
+  </metadata>
+  <manifest>
+    <item id="nav" href="nav.xhtml" media-type="application/xhtml+xml" properties="nav"/>
+    <item id="ncx" href="toc.ncx" media-type="application/x-dtbncx+xml"/>
+    <item id="style" href="style.css" media-type="text/css"/>
+    <item id="article" href="article.xhtml" media-type="application/xhtml+xml"/>
+{{- range .Images}}
+    <item id="{{x .ID}}" href="{{x .Href}}" media-type="image/jpeg"/>
+{{- end}}
+  </manifest>
+  <spine toc="ncx">
+    <itemref idref="article"/>
+  </spine>
+</package>
