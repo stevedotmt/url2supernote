@@ -25,30 +25,30 @@ Paywalled and JavaScript-only pages can't be extracted; the bot tells you instea
 
 Send or share any message containing links to your bot. Each link becomes one Delivery, reported as:
 
-| Reply | Meaning |
-| --- | --- |
-| `✅ <title> → INBOX` | Delivered |
-| `✅ <title> is already in INBOX` | A file with the same name exists; nothing was overwritten |
-| `❌ <url>: <reason>` | Failed, e.g. couldn't extract a readable article, page too large, Sync Engine authorization expired |
+| Reply                            | Meaning                                                                                             |
+| -------------------------------- | --------------------------------------------------------------------------------------------------- |
+| `✅ <title> → INBOX`             | Delivered                                                                                           |
+| `✅ <title> is already in INBOX` | A file with the same name exists; nothing was overwritten                                           |
+| `❌ <url>: <reason>`             | Failed, e.g. couldn't extract a readable article, page too large, Sync Engine authorization expired |
 
 ## Configuration
 
 `url2supernote serve` reads environment variables and refuses to start if any are missing or invalid.
 
-| Variable | Required | Default | |
-| --- | --- | --- | --- |
-| `TELEGRAM_BOT_TOKEN` | yes | | From @BotFather |
-| `TELEGRAM_OWNER_CHAT_ID` | yes | | The only chat the bot answers |
-| `TELEGRAM_MODE` | | `polling` | `polling` or `webhook` |
-| `TELEGRAM_WEBHOOK_URL` | webhook | | Public `https` URL Telegram calls; the path is served |
-| `TELEGRAM_WEBHOOK_SECRET` | webhook | | 1–256 of `A-Z a-z 0-9 _ -` |
-| `SYNC_ENGINE` | | `googledrive` | |
-| `DESTINATION` | | `Supernote/INBOX` | Folder path on the Sync Engine; must already exist |
-| `GOOGLE_CLIENT_ID` | googledrive | | Your OAuth client |
-| `GOOGLE_CLIENT_SECRET` | googledrive | | |
-| `GOOGLE_REFRESH_TOKEN` | googledrive | | From `url2supernote auth google` |
-| `PORT` | | `8080` | Webhook listener |
-| `LOG_LEVEL` | | `info` | `debug`, `info`, `warn`, `error` |
+| Variable                  | Required    | Default           |                                                       |
+| ------------------------- | ----------- | ----------------- | ----------------------------------------------------- |
+| `TELEGRAM_BOT_TOKEN`      | yes         |                   | From @BotFather                                       |
+| `TELEGRAM_OWNER_CHAT_ID`  | yes         |                   | The only chat the bot answers                         |
+| `TELEGRAM_MODE`           |             | `polling`         | `polling` or `webhook`                                |
+| `TELEGRAM_WEBHOOK_URL`    | webhook     |                   | Public `https` URL Telegram calls; the path is served |
+| `TELEGRAM_WEBHOOK_SECRET` | webhook     |                   | 1–256 of `A-Z a-z 0-9 _ -`                            |
+| `SYNC_ENGINE`             |             | `googledrive`     |                                                       |
+| `DESTINATION`             |             | `Supernote/INBOX` | Folder path on the Sync Engine; must already exist    |
+| `GOOGLE_CLIENT_ID`        | googledrive |                   | Your OAuth client                                     |
+| `GOOGLE_CLIENT_SECRET`    | googledrive |                   |                                                       |
+| `GOOGLE_REFRESH_TOKEN`    | googledrive |                   | From `url2supernote auth google`                      |
+| `PORT`                    |             | `8080`            | Webhook listener                                      |
+| `LOG_LEVEL`               |             | `info`            | `debug`, `info`, `warn`, `error`                      |
 
 Limits per Delivery: 45 s, 5 MB of HTML, 50 images, 15 MB EPUB.
 
@@ -68,13 +68,13 @@ go run ./cmd/url2supernote serve
 
 Infrastructure lives in [`infra/gcp`](infra/gcp) (`tofu fmt`, `tofu validate`, `tflint`). Golden files for the EPUB tests are refreshed with `go test ./internal/epub -update`. The opt-in Drive integration test runs when `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REFRESH_TOKEN` and `URL2SUPERNOTE_INTEGRATION_DESTINATION` are set.
 
-| Path | |
-| --- | --- |
-| `app/` | Go module: `cmd/url2supernote` and `internal/{delivery,extract,epub,syncengine,telegram,config}` |
-| `infra/gcp/` | OpenTofu module for Cloud Run |
-| `docs/setup/` | Owner guides |
-| `docs/adr/` | Architecture decisions |
-| `GLOSSARY.md` | Domain language |
+| Path          |                                                                                                  |
+| ------------- | ------------------------------------------------------------------------------------------------ |
+| `app/`        | Go module: `cmd/url2supernote` and `internal/{delivery,extract,epub,syncengine,telegram,config}` |
+| `infra/gcp/`  | OpenTofu module for Cloud Run                                                                    |
+| `docs/setup/` | Owner guides                                                                                     |
+| `docs/adr/`   | Architecture decisions                                                                           |
+| `GLOSSARY.md` | Domain language                                                                                  |
 
 ### Releasing
 
