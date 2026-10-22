@@ -21,6 +21,9 @@
       "gopls": {
         "pkg-path": "gopls"
       },
+      "just": {
+        "pkg-path": "just"
+      },
       "ko": {
         "pkg-path": "ko"
       },
@@ -35,7 +38,11 @@
       }
     },
     "vars": {
-      "GOTOOLCHAIN": "local"
+      "GOTOOLCHAIN": "local",
+      "KO_DOCKER_REPO": "ghcr.io/stevedotmt/url2supernote"
+    },
+    "hook": {
+      "on-activate": "  if [ -z \"${CI:-}\" ]; then\n    \"$FLOX_ENV_PROJECT/scripts/dev-vm.sh\"\n    export DOCKER_HOST=\"unix://${LIMA_HOME:-$HOME/.lima}/${URL2SUPERNOTE_VM:-url2supernote}/sock/docker.sock\"\n  fi\n"
     },
     "options": {
       "systems": [
@@ -563,6 +570,108 @@
       ],
       "outputs": {
         "out": "/nix/store/s56230qfj8f7qjysff3705rxajmrxmpr-gopls-0.23.0"
+      },
+      "system": "x86_64-linux",
+      "group": "toplevel",
+      "priority": 5
+    },
+    {
+      "attr_path": "just",
+      "broken": false,
+      "derivation": "/nix/store/jvj6icw2jhg41c15hwan7d4jpa2dzd21-just-1.58.0.drv",
+      "description": "Handy way to save and run project-specific commands",
+      "install_id": "just",
+      "license": "CC0-1.0",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=55bfb4d7437bd4e09ab7cba58a43bd68eb310044",
+      "name": "just-1.58.0",
+      "pname": "just",
+      "rev": "55bfb4d7437bd4e09ab7cba58a43bd68eb310044",
+      "rev_count": 1092090,
+      "rev_date": "2026-10-14T05:35:54Z",
+      "scrape_date": "2026-10-17T04:01:53.178095Z",
+      "stabilities": [
+        "unstable"
+      ],
+      "unfree": false,
+      "version": "1.58.0",
+      "outputs_to_install": [
+        "man",
+        "man",
+        "out",
+        "out"
+      ],
+      "outputs": {
+        "doc": "/nix/store/z45ags4638k33f3d6lla74jfxampk9y7-just-1.58.0-doc",
+        "man": "/nix/store/ndglr8n0wkxk0qpjrfazxmz3kgpypwby-just-1.58.0-man",
+        "out": "/nix/store/7myigx4c7gvdmy66z82v4gsca1y6rcsg-just-1.58.0"
+      },
+      "system": "aarch64-darwin",
+      "group": "toplevel",
+      "priority": 5
+    },
+    {
+      "attr_path": "just",
+      "broken": false,
+      "derivation": "/nix/store/rh31ar8qqis7wjlkp11na1r76ll5cmhj-just-1.58.0.drv",
+      "description": "Handy way to save and run project-specific commands",
+      "install_id": "just",
+      "license": "CC0-1.0",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=55bfb4d7437bd4e09ab7cba58a43bd68eb310044",
+      "name": "just-1.58.0",
+      "pname": "just",
+      "rev": "55bfb4d7437bd4e09ab7cba58a43bd68eb310044",
+      "rev_count": 1092090,
+      "rev_date": "2026-10-14T05:35:54Z",
+      "scrape_date": "2026-10-17T04:31:09.240976Z",
+      "stabilities": [
+        "unstable"
+      ],
+      "unfree": false,
+      "version": "1.58.0",
+      "outputs_to_install": [
+        "man",
+        "man",
+        "out",
+        "out"
+      ],
+      "outputs": {
+        "doc": "/nix/store/w5xq1nrfdsyazp0zdjs8ks581ryqlw4v-just-1.58.0-doc",
+        "man": "/nix/store/0ih4iwq1rslhr6igk1m5h7rj9bpn7qh8-just-1.58.0-man",
+        "out": "/nix/store/6byz8zyiqvnj7kn3kadfdks3if6sb37k-just-1.58.0"
+      },
+      "system": "aarch64-linux",
+      "group": "toplevel",
+      "priority": 5
+    },
+    {
+      "attr_path": "just",
+      "broken": false,
+      "derivation": "/nix/store/wk3k33pbb949p38y7r08qp3h10m0daxk-just-1.58.0.drv",
+      "description": "Handy way to save and run project-specific commands",
+      "install_id": "just",
+      "license": "CC0-1.0",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=55bfb4d7437bd4e09ab7cba58a43bd68eb310044",
+      "name": "just-1.58.0",
+      "pname": "just",
+      "rev": "55bfb4d7437bd4e09ab7cba58a43bd68eb310044",
+      "rev_count": 1092090,
+      "rev_date": "2026-10-14T05:35:54Z",
+      "scrape_date": "2026-10-17T05:06:05.260542Z",
+      "stabilities": [
+        "unstable"
+      ],
+      "unfree": false,
+      "version": "1.58.0",
+      "outputs_to_install": [
+        "man",
+        "man",
+        "out",
+        "out"
+      ],
+      "outputs": {
+        "doc": "/nix/store/dpy7p6cx6mq4xn0hh16507gd9fz7nl32-just-1.58.0-doc",
+        "man": "/nix/store/z0dsrhyy9d04c6sr75s9sjn2hnjaxhl3-just-1.58.0-man",
+        "out": "/nix/store/qgliqnslmd0pgxar92s306ipxz5vdxx2-just-1.58.0"
       },
       "system": "x86_64-linux",
       "group": "toplevel",

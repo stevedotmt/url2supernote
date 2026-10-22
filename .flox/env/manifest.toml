@@ -6,6 +6,7 @@ gopls.pkg-path = "gopls"
 golangci-lint.pkg-path = "golangci-lint"
 gofumpt.pkg-path = "gofumpt"
 ko.pkg-path = "ko"
+just.pkg-path = "just"
 opentofu.pkg-path = "opentofu"
 tflint.pkg-path = "tflint"
 google-cloud-sdk.pkg-path = "google-cloud-sdk"
@@ -14,6 +15,15 @@ docker.pkg-path = "docker"
 
 [vars]
 GOTOOLCHAIN = "local"
+KO_DOCKER_REPO = "ghcr.io/stevedotmt/url2supernote"
+
+[hook]
+on-activate = """
+  if [ -z "${CI:-}" ]; then
+    "$FLOX_ENV_PROJECT/scripts/dev-vm.sh"
+    export DOCKER_HOST="unix://${LIMA_HOME:-$HOME/.lima}/${URL2SUPERNOTE_VM:-url2supernote}/sock/docker.sock"
+  fi
+"""
 
 [options]
 systems = ["aarch64-darwin", "aarch64-linux", "x86_64-linux"]

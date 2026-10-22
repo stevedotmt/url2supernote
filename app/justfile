@@ -1,0 +1,7 @@
+image := "url2supernote"
+
+default:
+    @just --list
+
+build-image:
+    KO_DOCKER_REPO={{image}} ko build --local --platform="linux/$(docker version --format '{{{{.Server.Arch}}')" --bare ./cmd/url2supernote
