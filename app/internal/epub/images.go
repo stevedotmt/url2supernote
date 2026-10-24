@@ -115,20 +115,15 @@ func fetchImages(ctx context.Context, fetcher ImageFetcher, sources []*url.URL) 
 }
 
 func grayscaleJPEG(raw []byte) ([]byte, error) {
-	cfg, _, err := image.DecodeConfig(bytes.NewReader(raw))
+	src, err := decodeImage(raw)
 	if err != nil {
 		return nil, err
 	}
-	if cfg.Width < minImageSide || cfg.Height < minImageSide || cfg.Width*cfg.Height > maxImagePixels {
+
+	width, height := src.Bounds().Dx(), src.Bounds().Dy()
+	if width < minImageSide || height < minImageSide {
 		return nil, errImageSkipped
 	}
-
-	src, _, err := image.Decode(bytes.NewReader(raw))
-	if err != nil {
-		return nil, err
-	}
-
-	width, height := cfg.Width, cfg.Height
 	if width > MaxImageWidth {
 		height = height * MaxImageWidth / width
 		width = MaxImageWidth
@@ -143,4 +138,20 @@ func grayscaleJPEG(raw []byte) ([]byte, error) {
 		return nil, err
 	}
 	return out.Bytes(), nil
+}
+
+func decodeImage(raw []byte) (image.Image, error) {
+	if isSVG(raw) {
+		return rasterizeSVG(raw)
+	}
+
+	cfg, _, err := image.DecodeConfig(bytes.NewReader(raw))
+	if err != nil {
+		return nil, err
+	}
+	if cfg.Width*cfg.Height > maxImagePixels {
+		return nil, errImageSkipped
+	}
+	src, _, err := image.Decode(bytes.NewReader(raw))
+	return src, err
 }

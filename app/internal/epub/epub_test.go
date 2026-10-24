@@ -265,8 +265,30 @@ func TestGrayscaleJPEG(t *testing.T) {
 		}
 	})
 
+	t.Run("rasterizes SVG", func(t *testing.T) {
+		svg := `<?xml version="1.0"?><svg xmlns="http://www.w3.org/2000/svg" width="200" height="100" viewBox="0 0 200 100"><rect width="100" height="100" fill="black"/></svg>`
+		data, err := grayscaleJPEG([]byte(svg))
+		if err != nil {
+			t.Fatal(err)
+		}
+		img, err := jpeg.Decode(bytes.NewReader(data))
+		if err != nil {
+			t.Fatal(err)
+		}
+		if b := img.Bounds(); b.Dx() != 200 || b.Dy() != 100 {
+			t.Errorf("size = %v, want 200x100", b)
+		}
+		gray := img.(*image.Gray)
+		if y := gray.GrayAt(50, 50).Y; y > 10 {
+			t.Errorf("filled pixel = %d, want black", y)
+		}
+		if y := gray.GrayAt(150, 50).Y; y < 250 {
+			t.Errorf("background pixel = %d, want white", y)
+		}
+	})
+
 	t.Run("rejects data that is not an image", func(t *testing.T) {
-		if _, err := grayscaleJPEG([]byte("<svg/>")); err == nil {
+		if _, err := grayscaleJPEG([]byte("not an image")); err == nil {
 			t.Error("err = nil")
 		}
 	})
