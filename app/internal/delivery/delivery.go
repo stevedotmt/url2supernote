@@ -12,6 +12,7 @@ import (
 	"github.com/stevedotmt/url2supernote/app/internal/epub"
 	"github.com/stevedotmt/url2supernote/app/internal/extract"
 	"github.com/stevedotmt/url2supernote/app/internal/syncengine"
+	"github.com/stevedotmt/url2supernote/app/internal/webclient"
 )
 
 // DefaultBudget bounds a whole Delivery, from fetching the Article to storing the file.
@@ -109,6 +110,8 @@ func reason(err error, budget time.Duration) string {
 		return "the link is not a web page"
 	case errors.Is(err, extract.ErrPageTooLarge):
 		return "the page is too large"
+	case errors.Is(err, webclient.ErrNonPublicAddress):
+		return "the link points to a private or local address"
 	case errors.Is(err, extract.ErrFetch):
 		return "couldn't fetch the page"
 	case errors.Is(err, epub.ErrTooManyImages):

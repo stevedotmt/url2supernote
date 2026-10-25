@@ -19,6 +19,7 @@ import (
 	"github.com/stevedotmt/url2supernote/app/internal/extract"
 	"github.com/stevedotmt/url2supernote/app/internal/syncengine/googledrive"
 	"github.com/stevedotmt/url2supernote/app/internal/telegram"
+	"github.com/stevedotmt/url2supernote/app/internal/webclient"
 )
 
 const (
@@ -40,7 +41,7 @@ func serve(ctx context.Context, getenv func(string) string) error {
 		return err
 	}
 
-	web := &http.Client{Timeout: fetchTimeout}
+	web := webclient.New(fetchTimeout)
 	service := &delivery.Service{
 		Extractor: extract.New(web),
 		Builder:   epub.NewBuilder(epub.HTTPImageFetcher{Client: web, UserAgent: extract.DefaultUserAgent}),
