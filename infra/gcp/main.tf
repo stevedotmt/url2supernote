@@ -118,8 +118,8 @@ resource "google_cloud_run_v2_service" "this" {
         value = "googledrive"
       }
       env {
-        name  = "DESTINATION"
-        value = var.destination
+        name  = "GOOGLE_DRIVE_FOLDER_ID"
+        value = var.google_drive_folder_id
       }
       env {
         name  = "GOOGLE_CLIENT_ID"

@@ -59,6 +59,8 @@ func newFakeEngine(names ...string) *fakeEngine {
 	return e
 }
 
+func (f *fakeEngine) Name() string { return "INBOX" }
+
 func (f *fakeEngine) Exists(_ context.Context, name string) (bool, error) {
 	if f.existsErr != nil {
 		return false, f.existsErr
@@ -140,7 +142,7 @@ func TestDeliverFailures(t *testing.T) {
 		{"epub too large", ok, &fakeBuilder{err: epub.ErrTooLarge}, newFakeEngine(), "the article is too large"},
 		{"auth on exists", ok, &fakeBuilder{}, &fakeEngine{existsErr: syncengine.ErrUnauthorized}, "Sync Engine authorization expired"},
 		{"auth on put", ok, &fakeBuilder{}, &fakeEngine{files: map[string][]byte{}, putErr: syncengine.ErrUnauthorized}, "Sync Engine authorization expired"},
-		{"no destination", ok, &fakeBuilder{}, &fakeEngine{existsErr: syncengine.ErrDestinationNotFound}, "the Destination folder doesn't exist on the Sync Engine"},
+		{"no destination", ok, &fakeBuilder{}, &fakeEngine{existsErr: syncengine.ErrDestinationNotFound}, "the Destination folder is gone; run `url2supernote auth google` and pick it again"},
 		{"budget", ok, &fakeBuilder{err: context.DeadlineExceeded}, newFakeEngine(), "took longer than 45s"},
 		{"unknown", ok, &fakeBuilder{err: errors.New("boom")}, newFakeEngine(), "something went wrong"},
 	}

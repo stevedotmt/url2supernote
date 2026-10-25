@@ -15,6 +15,7 @@ func env(overrides map[string]string) func(string) string {
 		"GOOGLE_CLIENT_ID":       "id",
 		"GOOGLE_CLIENT_SECRET":   "secret",
 		"GOOGLE_REFRESH_TOKEN":   "refresh",
+		"GOOGLE_DRIVE_FOLDER_ID": "1sjZrlI0sZORRXMq_1CFoI1-7xeD7oHh8",
 	}
 	for k, v := range overrides {
 		values[k] = v
@@ -29,7 +30,7 @@ func TestLoadDefaults(t *testing.T) {
 	}
 
 	if cfg.TelegramMode != config.Polling || cfg.Port != "8080" || cfg.SyncEngine != config.GoogleDrive ||
-		cfg.Destination != "Supernote/INBOX" || cfg.TelegramOwnerChatID != 42 || cfg.LogLevel != slog.LevelInfo {
+		cfg.GoogleDriveFolderID != "1sjZrlI0sZORRXMq_1CFoI1-7xeD7oHh8" || cfg.TelegramOwnerChatID != 42 || cfg.LogLevel != slog.LevelInfo {
 		t.Errorf("cfg = %+v", cfg)
 	}
 }
@@ -58,6 +59,7 @@ func TestLoadReportsEveryProblem(t *testing.T) {
 		"TELEGRAM_WEBHOOK_URL":    "http://insecure.example",
 		"TELEGRAM_WEBHOOK_SECRET": "has spaces",
 		"GOOGLE_REFRESH_TOKEN":    "",
+		"GOOGLE_DRIVE_FOLDER_ID":  "Supernote/INBOX",
 		"LOG_LEVEL":               "loud",
 	}))
 	if err == nil {
@@ -70,6 +72,7 @@ func TestLoadReportsEveryProblem(t *testing.T) {
 		"TELEGRAM_WEBHOOK_URL must be an https URL",
 		"TELEGRAM_WEBHOOK_SECRET must be",
 		"GOOGLE_REFRESH_TOKEN is required",
+		"GOOGLE_DRIVE_FOLDER_ID must be a Drive folder ID",
 		"LOG_LEVEL",
 	} {
 		if !strings.Contains(err.Error(), want) {

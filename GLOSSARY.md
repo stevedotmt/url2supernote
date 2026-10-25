@@ -17,7 +17,7 @@ A cloud storage provider the Supernote natively syncs with, such as Google Drive
 _Avoid_: Storage backend, provider, cloud, drive
 
 **Inbox**:
-The `INBOX` folder the Supernote keeps inside its sync folder on a Sync Engine, and the default Destination.
+The `INBOX` folder the Supernote keeps inside its sync folder on a Sync Engine, and the folder Owners normally choose as their Destination.
 _Avoid_: Upload folder
 
 **Destination**:
