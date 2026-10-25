@@ -13,6 +13,8 @@ Telegram ──link──▶ url2supernote ──EPUB──▶ Google Drive /Sup
 
 Paywalled and JavaScript-only pages can't be extracted; the bot tells you instead of sending a broken file.
 
+The bot only fetches pages and images from public addresses on ports 80 and 443, so a link, redirect or image can't make it reach your local network or cloud metadata services.
+
 ## Set up
 
 1. [Create a Telegram bot and find your chat ID](docs/setup/telegram.md)
