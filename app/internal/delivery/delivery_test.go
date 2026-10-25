@@ -13,6 +13,7 @@ import (
 	"github.com/stevedotmt/url2supernote/app/internal/epub"
 	"github.com/stevedotmt/url2supernote/app/internal/extract"
 	"github.com/stevedotmt/url2supernote/app/internal/syncengine"
+	"github.com/stevedotmt/url2supernote/app/internal/webclient"
 )
 
 var savedAt = time.Date(2026, 10, 20, 8, 0, 0, 0, time.UTC)
@@ -133,6 +134,7 @@ func TestDeliverFailures(t *testing.T) {
 		{"unreadable", fakeExtractor{err: extract.ErrUnreadable}, &fakeBuilder{}, newFakeEngine(), "couldn't extract a readable article"},
 		{"not html", fakeExtractor{err: fmt.Errorf("%w: application/pdf", extract.ErrNotHTML)}, &fakeBuilder{}, newFakeEngine(), "the link is not a web page"},
 		{"fetch", fakeExtractor{err: fmt.Errorf("%w: HTTP 404", extract.ErrFetch)}, &fakeBuilder{}, newFakeEngine(), "couldn't fetch the page"},
+		{"non-public address", fakeExtractor{err: fmt.Errorf("%w: %w", extract.ErrFetch, webclient.ErrNonPublicAddress)}, &fakeBuilder{}, newFakeEngine(), "the link points to a private or local address"},
 		{"page too large", fakeExtractor{err: extract.ErrPageTooLarge}, &fakeBuilder{}, newFakeEngine(), "the page is too large"},
 		{"too many images", ok, &fakeBuilder{err: epub.ErrTooManyImages}, newFakeEngine(), "the article has too many images"},
 		{"epub too large", ok, &fakeBuilder{err: epub.ErrTooLarge}, newFakeEngine(), "the article is too large"},
