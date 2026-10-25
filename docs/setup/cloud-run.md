@@ -11,7 +11,7 @@ One person's usage stays well within the Cloud Run, Secret Manager and Artifact 
 
 ## Prerequisites
 
-- The [Telegram bot token and chat ID](telegram.md) and [Google OAuth client and refresh token](google-drive.md)
+- The [Telegram bot token and chat ID](telegram.md) and [Google OAuth client, Drive folder ID and refresh token](google-drive.md)
 - A Google Cloud project with billing enabled
 - `flox activate` from the repository root, which provides `tofu` and `gcloud`, then:
 
@@ -24,7 +24,7 @@ One person's usage stays well within the Cloud Run, Secret Manager and Artifact 
 
 ```sh
 cd infra/gcp
-cp terraform.tfvars.example terraform.tfvars   # fill in project, image digest, chat ID, client ID
+cp terraform.tfvars.example terraform.tfvars   # fill in project, image digest, chat ID, client ID, folder ID
 tofu init
 ```
 

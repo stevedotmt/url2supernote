@@ -11,6 +11,7 @@ Long polling needs no public URL, so this works on a home server, a NAS or a lap
    GOOGLE_CLIENT_ID=<your OAuth client>
    GOOGLE_CLIENT_SECRET=<your OAuth client secret>
    GOOGLE_REFRESH_TOKEN=<from auth google>
+   GOOGLE_DRIVE_FOLDER_ID=<from auth google>
    ```
 
 2. Take the image digest from the [GitHub Release](https://github.com/stevedotmt/url2supernote/releases) you want and verify it was built by this repository's release workflow:

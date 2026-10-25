@@ -8,6 +8,8 @@ import (
 	"net/url"
 	"regexp"
 	"strconv"
+
+	"github.com/stevedotmt/url2supernote/app/internal/syncengine/googledrive"
 )
 
 type TelegramMode string
@@ -19,10 +21,7 @@ const (
 
 const GoogleDrive = "googledrive"
 
-const (
-	defaultPort        = "8080"
-	defaultDestination = "Supernote/INBOX"
-)
+const defaultPort = "8080"
 
 var webhookSecretPattern = regexp.MustCompile(`^[A-Za-z0-9_-]{1,256}$`)
 
@@ -36,12 +35,12 @@ type Config struct {
 
 	Port string
 
-	SyncEngine  string
-	Destination string
+	SyncEngine string
 
-	GoogleClientID     string
-	GoogleClientSecret string
-	GoogleRefreshToken string
+	GoogleClientID      string
+	GoogleClientSecret  string
+	GoogleRefreshToken  string
+	GoogleDriveFolderID string
 
 	LogLevel slog.Level
 }
@@ -68,7 +67,6 @@ func Load(getenv func(string) string) (Config, error) {
 		TelegramMode:     TelegramMode(withDefault("TELEGRAM_MODE", string(Polling))),
 		Port:             withDefault("PORT", defaultPort),
 		SyncEngine:       withDefault("SYNC_ENGINE", GoogleDrive),
-		Destination:      withDefault("DESTINATION", defaultDestination),
 	}
 
 	if chatID := require("TELEGRAM_OWNER_CHAT_ID"); chatID != "" {
@@ -99,6 +97,10 @@ func Load(getenv func(string) string) (Config, error) {
 		cfg.GoogleClientID = require("GOOGLE_CLIENT_ID")
 		cfg.GoogleClientSecret = require("GOOGLE_CLIENT_SECRET")
 		cfg.GoogleRefreshToken = require("GOOGLE_REFRESH_TOKEN")
+		cfg.GoogleDriveFolderID = require("GOOGLE_DRIVE_FOLDER_ID")
+		if cfg.GoogleDriveFolderID != "" && !googledrive.ValidFolderID(cfg.GoogleDriveFolderID) {
+			problems = append(problems, fmt.Errorf("GOOGLE_DRIVE_FOLDER_ID must be a Drive folder ID from `url2supernote auth google`, got %q", cfg.GoogleDriveFolderID))
+		}
 	default:
 		problems = append(problems, fmt.Errorf("SYNC_ENGINE must be %q, got %q", GoogleDrive, cfg.SyncEngine))
 	}

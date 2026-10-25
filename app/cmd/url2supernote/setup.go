@@ -27,11 +27,21 @@ func authGoogle(ctx context.Context, args []string, getenv func(string) string, 
 	ctx, cancel := context.WithTimeout(ctx, 10*time.Minute)
 	defer cancel()
 
-	token, err := googledrive.Authorize(ctx, googledrive.OAuthConfig(clientID, clientSecret), *listen, stdout)
+	cfg := googledrive.OAuthConfig(clientID, clientSecret)
+	fmt.Fprintln(stdout, "In the Google Picker, open your Supernote sync folder and select the INBOX folder itself.")
+	token, folderID, err := googledrive.Authorize(ctx, cfg, *listen, stdout)
 	if err != nil {
 		return err
 	}
-	fmt.Fprintf(stdout, "Refresh token (store it as GOOGLE_REFRESH_TOKEN):\n\n%s\n", token)
+
+	engine, err := googledrive.Open(ctx, cfg, token, folderID)
+	if err != nil {
+		fmt.Fprintf(stdout, "Could not verify the picked folder. These values are still what you picked:\n\nGOOGLE_DRIVE_FOLDER_ID=%s\nGOOGLE_REFRESH_TOKEN=%s\n\n", folderID, token)
+		return fmt.Errorf("verify the picked folder: %w", err)
+	}
+
+	fmt.Fprintf(stdout, "url2supernote can deliver into %q and cannot read your other files. Store these:\n\n", engine.Name())
+	fmt.Fprintf(stdout, "GOOGLE_DRIVE_FOLDER_ID=%s\nGOOGLE_REFRESH_TOKEN=%s\n", folderID, token)
 	return nil
 }
 
