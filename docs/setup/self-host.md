@@ -13,11 +13,17 @@ Long polling needs no public URL, so this works on a home server, a NAS or a lap
    GOOGLE_REFRESH_TOKEN=<from auth google>
    ```
 
-2. Run it:
+2. Take the image digest from the [GitHub Release](https://github.com/stevedotmt/url2supernote/releases) you want and verify it was built by this repository's release workflow:
+
+   ```sh
+   gh attestation verify oci://ghcr.io/stevedotmt/url2supernote@<digest> --repo stevedotmt/url2supernote
+   ```
+
+3. Run it by digest, so a moved or overwritten tag can't change what runs:
 
    ```sh
    docker run -d --name url2supernote --restart unless-stopped --env-file .env \
-     ghcr.io/stevedotmt/url2supernote:<version> serve
+     ghcr.io/stevedotmt/url2supernote@<digest> serve
    ```
 
 Starting in polling mode removes any webhook previously registered for the bot, so don't run a polling and a webhook deployment of the same bot at the same time.

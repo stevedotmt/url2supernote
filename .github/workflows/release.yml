@@ -4,33 +4,88 @@ on:
   push:
     tags: ["v*.*.*"]
 
-permissions:
-  contents: write
-  packages: write
+permissions: {}
+
+concurrency:
+  group: release
+  cancel-in-progress: false
 
 jobs:
-  release:
+  test:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
-      - uses: actions/checkout@v7
-      - uses: flox/install-flox-action@v2
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Require the tag to point at a commit on main
+        run: git merge-base --is-ancestor "$GITHUB_SHA" origin/main
+      - uses: flox/install-flox-action@5bb9eaaffbeaa699a8251a1ae21ecf4c8e0e37d4 # v2.7.0
       - name: Test
         run: flox activate -- bash -c 'cd app && go test ./...'
-      - name: Publish image
+
+  publish:
+    needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+      attestations: write
+    outputs:
+      digest: ${{ steps.build.outputs.digest }}
+    env:
+      KO_DOCKER_REPO: ghcr.io/${{ github.repository }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: flox/install-flox-action@5bb9eaaffbeaa699a8251a1ae21ecf4c8e0e37d4 # v2.7.0
+      - name: Log in to GHCR
         env:
           GITHUB_TOKEN: ${{ github.token }}
-          KO_DOCKER_REPO: ghcr.io/${{ github.repository }}
+        run: printf %s "$GITHUB_TOKEN" | flox activate -- ko login ghcr.io --username "$GITHUB_ACTOR" --password-stdin
+      - name: Publish image
+        id: build
+        working-directory: app
         run: |
-          flox activate -- bash -c '
-            cd app
-            ko login ghcr.io --username "${{ github.actor }}" --password "$GITHUB_TOKEN"
-            ko build --bare \
-              --tags "${GITHUB_REF_NAME},latest" \
-              --image-label "org.opencontainers.image.source=https://github.com/${{ github.repository }}" \
-              --image-label "org.opencontainers.image.version=${GITHUB_REF_NAME}" \
-              ./cmd/url2supernote
-          '
+          ref="$(flox activate -- ko build --bare \
+            --tags "$GITHUB_REF_NAME" \
+            --image-label "org.opencontainers.image.source=$GITHUB_SERVER_URL/$GITHUB_REPOSITORY" \
+            --image-label "org.opencontainers.image.version=$GITHUB_REF_NAME" \
+            --image-label "org.opencontainers.image.revision=$GITHUB_SHA" \
+            ./cmd/url2supernote)"
+          echo "digest=${ref##*@}" >> "$GITHUB_OUTPUT"
+      - uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        with:
+          subject-name: ${{ env.KO_DOCKER_REPO }}
+          subject-digest: ${{ steps.build.outputs.digest }}
+          push-to-registry: true
+
+  release:
+    needs: publish
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
       - name: Create GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release create "$GITHUB_REF_NAME" --verify-tag --generate-notes
+          DIGEST: ${{ needs.publish.outputs.digest }}
+        run: |
+          image="ghcr.io/$GITHUB_REPOSITORY@$DIGEST"
+          notes="$(printf '%s\n' \
+            '## Image' \
+            '' \
+            '```' \
+            "$image" \
+            '```' \
+            '' \
+            'Verify it before deploying:' \
+            '' \
+            '```sh' \
+            "gh attestation verify oci://$image --repo $GITHUB_REPOSITORY" \
+            '```')"
+          gh release create "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --verify-tag --generate-notes --notes "$notes"

@@ -12,6 +12,9 @@ tflint.pkg-path = "tflint"
 google-cloud-sdk.pkg-path = "google-cloud-sdk"
 lima.pkg-path = "lima"
 docker.pkg-path = "docker"
+crane.pkg-path = "crane"
+zizmor.pkg-path = "zizmor"
+actionlint.pkg-path = "actionlint"
 
 [vars]
 GOTOOLCHAIN = "local"

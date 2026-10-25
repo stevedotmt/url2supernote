@@ -21,10 +21,10 @@ In the [Google Cloud console](https://console.cloud.google.com/), using the proj
 docker run --rm -it -p 8085:8085 \
   -e GOOGLE_CLIENT_ID=<client id> \
   -e GOOGLE_CLIENT_SECRET=<client secret> \
-  ghcr.io/stevedotmt/url2supernote:<version> auth google --listen 0.0.0.0:8085
+  ghcr.io/stevedotmt/url2supernote@<digest> auth google --listen 0.0.0.0:8085
 ```
 
-Open the printed URL, choose your account, click through **Google hasn't verified this app → Advanced → Go to url2supernote**, and allow Drive access. The command prints the refresh token; this is `GOOGLE_REFRESH_TOKEN`.
+`<digest>` comes from the [GitHub Release](https://github.com/stevedotmt/url2supernote/releases); see [Self-host](self-host.md) for how to verify it. Open the printed URL, choose your account, click through **Google hasn't verified this app → Advanced → Go to url2supernote**, and allow Drive access. The command prints the refresh token; this is `GOOGLE_REFRESH_TOKEN`.
 
 Contributors inside `flox activate` can run `go run ./cmd/url2supernote auth google` from `app/` instead.
 
