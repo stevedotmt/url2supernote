@@ -9,8 +9,6 @@ import (
 	"net/http"
 	"net/url"
 	"os"
-	"path"
-	"strings"
 	"time"
 
 	"github.com/stevedotmt/url2supernote/app/internal/config"
@@ -26,6 +24,7 @@ const (
 	fetchTimeout    = 30 * time.Second
 	telegramTimeout = 70 * time.Second
 	shutdownTimeout = 10 * time.Second
+	startupTimeout  = 15 * time.Second
 )
 
 func serve(ctx context.Context, getenv func(string) string) error {
@@ -35,8 +34,7 @@ func serve(ctx context.Context, getenv func(string) string) error {
 	}
 	logger := newLogger(cfg.LogLevel)
 
-	engine, err := googledrive.New(context.WithoutCancel(ctx),
-		googledrive.OAuthConfig(cfg.GoogleClientID, cfg.GoogleClientSecret), cfg.GoogleRefreshToken, cfg.Destination)
+	engine, err := openGoogleDrive(ctx, cfg)
 	if err != nil {
 		return err
 	}
@@ -55,15 +53,22 @@ func serve(ctx context.Context, getenv func(string) string) error {
 		Messenger:       client,
 		Deliverer:       service,
 		OwnerChatID:     cfg.TelegramOwnerChatID,
-		DestinationName: path.Base(strings.TrimRight(cfg.Destination, "/")),
+		DestinationName: engine.Name(),
 		Logger:          logger,
 	}
 
 	if cfg.TelegramMode == config.Polling {
-		logger.Info("receiving updates by long polling", "destination", cfg.Destination)
+		logger.Info("receiving updates by long polling", "destination", engine.Name())
 		return telegram.Poll(ctx, client, bot, logger)
 	}
 	return serveWebhook(ctx, cfg, client, bot, logger)
+}
+
+func openGoogleDrive(ctx context.Context, cfg config.Config) (*googledrive.Engine, error) {
+	ctx, cancel := context.WithTimeout(ctx, startupTimeout)
+	defer cancel()
+	oauth := googledrive.OAuthConfig(cfg.GoogleClientID, cfg.GoogleClientSecret)
+	return googledrive.Open(ctx, oauth, cfg.GoogleRefreshToken, cfg.GoogleDriveFolderID)
 }
 
 func serveWebhook(ctx context.Context, cfg config.Config, client *telegram.Client, bot *telegram.Bot, logger *slog.Logger) error {
@@ -91,7 +96,7 @@ func serveWebhook(ctx context.Context, cfg config.Config, client *telegram.Clien
 		_ = server.Close()
 		return err
 	}
-	logger.Info("receiving updates by webhook", "port", cfg.Port, "path", webhookPath, "destination", cfg.Destination)
+	logger.Info("receiving updates by webhook", "port", cfg.Port, "path", webhookPath, "destination", bot.DestinationName)
 
 	select {
 	case err := <-serveErr:

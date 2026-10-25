@@ -41,10 +41,14 @@ variable "telegram_owner_chat_id" {
   }
 }
 
-variable "destination" {
-  description = "Destination folder path on Google Drive."
+variable "google_drive_folder_id" {
+  description = "ID of the Destination folder on Google Drive, from `url2supernote auth google`."
   type        = string
-  default     = "Supernote/INBOX"
+
+  validation {
+    condition     = can(regex("^[A-Za-z0-9_-]+$", var.google_drive_folder_id))
+    error_message = "google_drive_folder_id must be the folder ID printed by `url2supernote auth google`."
+  }
 }
 
 variable "google_client_id" {

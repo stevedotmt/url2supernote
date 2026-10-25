@@ -121,7 +121,7 @@ func reason(err error, budget time.Duration) string {
 	case errors.Is(err, syncengine.ErrUnauthorized):
 		return "Sync Engine authorization expired"
 	case errors.Is(err, syncengine.ErrDestinationNotFound):
-		return "the Destination folder doesn't exist on the Sync Engine"
+		return "the Destination folder is gone; run `url2supernote auth google` and pick it again"
 	default:
 		return "something went wrong"
 	}
