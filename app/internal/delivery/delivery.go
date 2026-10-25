@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
+	"runtime/debug"
 	"time"
 
 	"github.com/stevedotmt/url2supernote/app/internal/article"
@@ -56,12 +57,18 @@ type Service struct {
 	Now       func() time.Time
 }
 
-// Deliver runs one Delivery for the Article at u.
-func (s *Service) Deliver(ctx context.Context, u *url.URL) Result {
+// Deliver runs one Delivery for the Article at u. A panic while handling the untrusted page fails the
+// Delivery instead of crashing the process.
+func (s *Service) Deliver(ctx context.Context, u *url.URL) (result Result) {
 	ctx, cancel := context.WithTimeout(ctx, s.Budget)
 	defer cancel()
 
-	result := Result{URL: u}
+	result = Result{URL: u}
+	defer func() {
+		if r := recover(); r != nil {
+			result = failed(result, s.Budget, fmt.Errorf("panic: %v\n%s", r, debug.Stack()))
+		}
+	}()
 
 	a, err := s.Extractor.Extract(ctx, u)
 	if err != nil {

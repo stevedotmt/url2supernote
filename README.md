@@ -50,7 +50,7 @@ Send or share any message containing links to your bot. Each link becomes one De
 | `PORT`                    |             | `8080`            | Webhook listener                                      |
 | `LOG_LEVEL`               |             | `info`            | `debug`, `info`, `warn`, `error`                      |
 
-Limits per Delivery: 45 s, 5 MB of HTML, 50 images, 15 MB EPUB.
+Limits per Delivery: 45 s, 5 MB of HTML, 50 images, 15 MB EPUB. At most three Deliveries run at once, and images too large to decode within 128 MB are left out. When polling, each message is acknowledged before its links are fetched, so a page that crashes the bot isn't retried after a restart.
 
 ## Development
 

@@ -102,6 +102,10 @@ resource "google_cloud_run_v2_service" "this" {
       }
 
       env {
+        name  = "GOMEMLIMIT"
+        value = "400MiB"
+      }
+      env {
         name  = "TELEGRAM_MODE"
         value = "webhook"
       }

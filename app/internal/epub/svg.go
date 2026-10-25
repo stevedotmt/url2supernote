@@ -17,25 +17,38 @@ func isSVG(raw []byte) bool {
 	return bytes.Contains(raw[:min(len(raw), svgSniffLength)], []byte("<svg"))
 }
 
-func rasterizeSVG(raw []byte) (image.Image, error) {
+func inspectSVG(raw []byte) (sourceImage, error) {
+	if len(raw) > maxSVGBytes {
+		return sourceImage{}, errImageSkipped
+	}
 	icon, err := oksvg.ReadIconStream(bytes.NewReader(raw), oksvg.WarnErrorMode)
 	if err != nil {
-		return nil, err
+		return sourceImage{}, err
 	}
 	if icon.ViewBox.W <= 0 || icon.ViewBox.H <= 0 {
-		return nil, errImageSkipped
+		return sourceImage{}, errImageSkipped
 	}
 
 	scale := min(1, MaxImageWidth/icon.ViewBox.W)
-	width := int(math.Round(icon.ViewBox.W * scale))
-	height := int(math.Round(icon.ViewBox.H * scale))
-	if width < minImageSide || height < minImageSide || width*height > maxImagePixels {
-		return nil, errImageSkipped
+	width := math.Round(icon.ViewBox.W * scale)
+	height := math.Round(icon.ViewBox.H * scale)
+	if pixels := width * height; math.IsNaN(pixels) || pixels > maxImagePixels {
+		return sourceImage{}, errImageSkipped
 	}
+	return sourceImage{
+		width:         int(width),
+		height:        int(height),
+		bytesPerPixel: 4,
+		decode: func() (image.Image, error) {
+			return rasterizeSVG(icon, int(width), int(height)), nil
+		},
+	}, nil
+}
 
+func rasterizeSVG(icon *oksvg.SvgIcon, width, height int) image.Image {
 	dst := image.NewRGBA(image.Rect(0, 0, width, height))
 	draw.Draw(dst, dst.Bounds(), image.NewUniform(color.White), image.Point{}, draw.Src)
 	icon.SetTarget(0, 0, float64(width), float64(height))
 	icon.Draw(rasterx.NewDasher(width, height, rasterx.NewScannerGV(width, height, dst, dst.Bounds())), 1)
-	return dst, nil
+	return dst
 }
