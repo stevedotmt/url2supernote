@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="docs/img/logo.png" alt="url2supernote logo" width="200">
+</p>
+
 # url2supernote
 
 Send a link to your Telegram bot; a clean EPUB of the article appears in your Supernote's `INBOX` a few seconds later, ready to read offline.
