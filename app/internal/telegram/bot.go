@@ -23,7 +23,8 @@ type Messenger interface {
 	EditMessageText(ctx context.Context, chatID, messageID int64, text string) error
 }
 
-// Bot turns the Owner's messages into Deliveries and reports each outcome.
+// Bot turns the Owner's messages into Deliveries and reports each outcome. At most three Deliveries
+// run at once across all updates, so concurrent webhook calls cannot multiply memory use.
 type Bot struct {
 	Messenger   Messenger
 	Deliverer   Deliverer
@@ -31,6 +32,9 @@ type Bot struct {
 	// DestinationName is how replies refer to the Destination, e.g. "INBOX".
 	DestinationName string
 	Logger          *slog.Logger
+
+	slotsOnce sync.Once
+	slots     chan struct{}
 }
 
 // HandleUpdate processes one update. Updates from any chat other than the Owner's are ignored.
@@ -50,12 +54,12 @@ func (b *Bot) HandleUpdate(ctx context.Context, update Update) {
 		return
 	}
 
+	b.slotsOnce.Do(func() { b.slots = make(chan struct{}, concurrentDeliveries) })
 	var wg sync.WaitGroup
-	slots := make(chan struct{}, concurrentDeliveries)
 	for _, u := range urls {
 		wg.Go(func() {
-			slots <- struct{}{}
-			defer func() { <-slots }()
+			b.slots <- struct{}{}
+			defer func() { <-b.slots }()
 			b.deliver(ctx, u)
 		})
 	}

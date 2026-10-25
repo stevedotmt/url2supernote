@@ -17,6 +17,7 @@ import (
 
 	"golang.org/x/image/draw"
 	_ "golang.org/x/image/webp"
+	"golang.org/x/sync/semaphore"
 )
 
 const (
@@ -26,11 +27,15 @@ const (
 	minImageSide       = 16
 	maxImagePixels     = 40_000_000
 	maxImageFetchBytes = 10 << 20
+	maxSVGBytes        = 2 << 20
+	maxDecodeBytes     = 128 << 20
 	imageFetchWorkers  = 4
 	jpegQuality        = 75
 )
 
 var errImageSkipped = errors.New("image skipped")
+
+var decodeMemory = semaphore.NewWeighted(maxDecodeBytes)
 
 // ImageFetcher downloads the raw bytes of an image referenced by an article.
 type ImageFetcher interface {
@@ -84,13 +89,7 @@ func fetchImages(ctx context.Context, fetcher ImageFetcher, sources []*url.URL) 
 	for range min(imageFetchWorkers, len(sources)) {
 		wg.Go(func() {
 			for i := range jobs {
-				raw, err := fetcher.FetchImage(ctx, sources[i])
-				if err != nil {
-					continue
-				}
-				if data, err := grayscaleJPEG(raw); err == nil {
-					processed[i] = data
-				}
+				processed[i] = fetchGrayscaleJPEG(ctx, fetcher, sources[i])
 			}
 		})
 	}
@@ -114,24 +113,62 @@ func fetchImages(ctx context.Context, fetcher ImageFetcher, sources []*url.URL) 
 	return images
 }
 
-func grayscaleJPEG(raw []byte) ([]byte, error) {
-	src, err := decodeImage(raw)
+func fetchGrayscaleJPEG(ctx context.Context, fetcher ImageFetcher, source *url.URL) (data []byte) {
+	defer func() {
+		if recover() != nil {
+			data = nil
+		}
+	}()
+	raw, err := fetcher.FetchImage(ctx, source)
+	if err != nil {
+		return nil
+	}
+	data, err = grayscaleJPEG(ctx, raw)
+	if err != nil {
+		return nil
+	}
+	return data
+}
+
+type sourceImage struct {
+	width, height int
+	bytesPerPixel int64
+	decode        func() (image.Image, error)
+}
+
+func grayscaleJPEG(ctx context.Context, raw []byte) ([]byte, error) {
+	src, err := inspectImage(raw)
 	if err != nil {
 		return nil, err
 	}
-
-	width, height := src.Bounds().Dx(), src.Bounds().Dy()
-	if width < minImageSide || height < minImageSide {
+	if src.width < minImageSide || src.height < minImageSide || int64(src.width)*int64(src.height) > maxImagePixels {
 		return nil, errImageSkipped
 	}
+
+	width, height := src.width, src.height
 	if width > MaxImageWidth {
 		height = height * MaxImageWidth / width
 		width = MaxImageWidth
 	}
+	height = max(height, 1)
 
-	dst := image.NewGray(image.Rect(0, 0, width, max(height, 1)))
+	cost := int64(src.width)*int64(src.height)*src.bytesPerPixel + int64(width)*int64(height)
+	if cost > maxDecodeBytes {
+		return nil, errImageSkipped
+	}
+	if err := decodeMemory.Acquire(ctx, cost); err != nil {
+		return nil, err
+	}
+	defer decodeMemory.Release(cost)
+
+	decoded, err := src.decode()
+	if err != nil {
+		return nil, err
+	}
+
+	dst := image.NewGray(image.Rect(0, 0, width, height))
 	draw.Draw(dst, dst.Bounds(), image.NewUniform(color.White), image.Point{}, draw.Src)
-	draw.CatmullRom.Scale(dst, dst.Bounds(), src, src.Bounds(), draw.Over, nil)
+	draw.CatmullRom.Scale(dst, dst.Bounds(), decoded, decoded.Bounds(), draw.Over, nil)
 
 	var out bytes.Buffer
 	if err := jpeg.Encode(&out, dst, &jpeg.Options{Quality: jpegQuality}); err != nil {
@@ -140,18 +177,40 @@ func grayscaleJPEG(raw []byte) ([]byte, error) {
 	return out.Bytes(), nil
 }
 
-func decodeImage(raw []byte) (image.Image, error) {
+func inspectImage(raw []byte) (sourceImage, error) {
 	if isSVG(raw) {
-		return rasterizeSVG(raw)
+		return inspectSVG(raw)
 	}
 
 	cfg, _, err := image.DecodeConfig(bytes.NewReader(raw))
 	if err != nil {
-		return nil, err
+		return sourceImage{}, err
 	}
-	if cfg.Width*cfg.Height > maxImagePixels {
-		return nil, errImageSkipped
+	return sourceImage{
+		width:         cfg.Width,
+		height:        cfg.Height,
+		bytesPerPixel: bytesPerPixel(cfg.ColorModel),
+		decode: func() (image.Image, error) {
+			img, _, err := image.Decode(bytes.NewReader(raw))
+			return img, err
+		},
+	}, nil
+}
+
+func bytesPerPixel(model color.Model) int64 {
+	if _, ok := model.(color.Palette); ok {
+		return 1
 	}
-	src, _, err := image.Decode(bytes.NewReader(raw))
-	return src, err
+	switch model {
+	case color.GrayModel, color.AlphaModel:
+		return 1
+	case color.Gray16Model, color.Alpha16Model:
+		return 2
+	case color.YCbCrModel:
+		return 3
+	case color.RGBAModel, color.NRGBAModel, color.CMYKModel, color.NYCbCrAModel:
+		return 4
+	default:
+		return 8
+	}
 }

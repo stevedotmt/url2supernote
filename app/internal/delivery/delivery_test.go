@@ -163,6 +163,27 @@ func TestDeliverFailures(t *testing.T) {
 	}
 }
 
+type panickingBuilder struct{}
+
+func (panickingBuilder) Build(context.Context, article.Article, time.Time) ([]byte, error) {
+	panic("parser bug")
+}
+
+func TestDeliverFailsInsteadOfPanicking(t *testing.T) {
+	got := newService(fakeExtractor{article: article.Article{Title: "Hello"}}, panickingBuilder{}, newFakeEngine()).
+		Deliver(context.Background(), articleURL)
+
+	if got.Outcome != delivery.Failed {
+		t.Fatalf("outcome = %s, want failed", got.Outcome)
+	}
+	if got.Reason != "something went wrong" {
+		t.Errorf("reason = %q", got.Reason)
+	}
+	if got.Title != "Hello" || got.Err == nil {
+		t.Errorf("result = %+v", got)
+	}
+}
+
 type blockingExtractor struct{}
 
 func (blockingExtractor) Extract(ctx context.Context, _ *url.URL) (article.Article, error) {
