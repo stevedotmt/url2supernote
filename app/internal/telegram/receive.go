@@ -56,15 +56,21 @@ type UpdateSource interface {
 	GetUpdates(ctx context.Context, offset int64, timeoutSeconds int) ([]Update, error)
 }
 
-// Poll receives updates by long polling until ctx is cancelled.
+// Poll receives updates by long polling until ctx is cancelled. Each batch is confirmed to Telegram before
+// it is handled, so an update that crashes the process is not redelivered on restart.
 func Poll(ctx context.Context, source UpdateSource, handler UpdateHandler, logger *slog.Logger) error {
 	if err := source.DeleteWebhook(ctx); err != nil {
 		return err
 	}
 
 	var offset int64
+	var confirming []Update
 	for {
-		updates, err := source.GetUpdates(ctx, offset, pollTimeoutSeconds)
+		timeout := pollTimeoutSeconds
+		if len(confirming) > 0 {
+			timeout = 0
+		}
+		updates, err := source.GetUpdates(ctx, offset, timeout)
 		if ctx.Err() != nil {
 			return nil
 		}
@@ -75,9 +81,12 @@ func Poll(ctx context.Context, source UpdateSource, handler UpdateHandler, logge
 			}
 			continue
 		}
-		for _, update := range updates {
-			offset = update.UpdateID + 1
+		for _, update := range confirming {
 			handler.HandleUpdate(ctx, update)
+		}
+		confirming = updates
+		if len(updates) > 0 {
+			offset = updates[len(updates)-1].UpdateID + 1
 		}
 	}
 }

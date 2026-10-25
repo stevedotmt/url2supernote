@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"net/http"
 	"net/http/httptest"
+	"slices"
 	"strings"
 	"sync"
 	"testing"
@@ -94,11 +95,14 @@ func (f *fakeSource) DeleteWebhook(context.Context) error {
 	return f.err
 }
 
-func (f *fakeSource) GetUpdates(ctx context.Context, offset int64, _ int) ([]Update, error) {
+func (f *fakeSource) GetUpdates(ctx context.Context, offset int64, timeoutSeconds int) ([]Update, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	f.offsets = append(f.offsets, offset)
 	if len(f.batches) == 0 {
+		if timeoutSeconds == 0 {
+			return nil, nil
+		}
 		<-ctx.Done()
 		return nil, ctx.Err()
 	}
@@ -107,7 +111,7 @@ func (f *fakeSource) GetUpdates(ctx context.Context, offset int64, _ int) ([]Upd
 	return batch, nil
 }
 
-func TestPollConfirmsEachBatch(t *testing.T) {
+func TestPollConfirmsEachBatchBeforeHandlingIt(t *testing.T) {
 	source := &fakeSource{batches: [][]Update{
 		{{UpdateID: 10}, {UpdateID: 11}},
 		{{UpdateID: 12}},
@@ -115,7 +119,17 @@ func TestPollConfirmsEachBatch(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	handler := &recordingHandler{}
 	handler.onCall = func() {
-		if len(handler.updates) == 3 {
+		handler.mu.Lock()
+		handled := handler.updates[len(handler.updates)-1].UpdateID
+		count := len(handler.updates)
+		handler.mu.Unlock()
+		source.mu.Lock()
+		confirmed := source.offsets[len(source.offsets)-1]
+		source.mu.Unlock()
+		if confirmed <= handled {
+			t.Errorf("update %d handled before it was confirmed (offset %d)", handled, confirmed)
+		}
+		if count == 3 {
 			cancel()
 		}
 	}
@@ -130,7 +144,7 @@ func TestPollConfirmsEachBatch(t *testing.T) {
 	if len(handler.updates) != 3 {
 		t.Errorf("handled %d updates, want 3", len(handler.updates))
 	}
-	if want := []int64{0, 12, 13}; len(source.offsets) != 3 || source.offsets[1] != want[1] || source.offsets[2] != want[2] {
+	if want := []int64{0, 12, 13, 13}; !slices.Equal(source.offsets, want) {
 		t.Errorf("offsets = %v, want %v", source.offsets, want)
 	}
 }

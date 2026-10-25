@@ -4,9 +4,11 @@ import (
 	"archive/zip"
 	"bytes"
 	"context"
+	"encoding/binary"
 	"encoding/xml"
 	"errors"
 	"flag"
+	"hash/crc32"
 	"image"
 	"image/color"
 	"image/jpeg"
@@ -232,7 +234,7 @@ func TestBuildFallsBackToSiteForTitleAndDefaultLanguage(t *testing.T) {
 
 func TestGrayscaleJPEG(t *testing.T) {
 	t.Run("composites transparency onto white", func(t *testing.T) {
-		data, err := grayscaleJPEG(pngImage(t, 32, 32, color.Transparent))
+		data, err := grayscaleJPEG(context.Background(), pngImage(t, 32, 32, color.Transparent))
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -246,7 +248,7 @@ func TestGrayscaleJPEG(t *testing.T) {
 	})
 
 	t.Run("keeps small images at their size", func(t *testing.T) {
-		data, err := grayscaleJPEG(pngImage(t, 300, 200, color.Black))
+		data, err := grayscaleJPEG(context.Background(), pngImage(t, 300, 200, color.Black))
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -260,14 +262,14 @@ func TestGrayscaleJPEG(t *testing.T) {
 	})
 
 	t.Run("skips tracking pixels", func(t *testing.T) {
-		if _, err := grayscaleJPEG(pngImage(t, 1, 1, color.Black)); !errors.Is(err, errImageSkipped) {
+		if _, err := grayscaleJPEG(context.Background(), pngImage(t, 1, 1, color.Black)); !errors.Is(err, errImageSkipped) {
 			t.Errorf("err = %v, want errImageSkipped", err)
 		}
 	})
 
 	t.Run("rasterizes SVG", func(t *testing.T) {
 		svg := `<?xml version="1.0"?><svg xmlns="http://www.w3.org/2000/svg" width="200" height="100" viewBox="0 0 200 100"><rect width="100" height="100" fill="black"/></svg>`
-		data, err := grayscaleJPEG([]byte(svg))
+		data, err := grayscaleJPEG(context.Background(), []byte(svg))
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -288,8 +290,68 @@ func TestGrayscaleJPEG(t *testing.T) {
 	})
 
 	t.Run("rejects data that is not an image", func(t *testing.T) {
-		if _, err := grayscaleJPEG([]byte("not an image")); err == nil {
+		if _, err := grayscaleJPEG(context.Background(), []byte("not an image")); err == nil {
 			t.Error("err = nil")
 		}
 	})
+
+	t.Run("skips images too large to decode without allocating them", func(t *testing.T) {
+		if _, err := grayscaleJPEG(context.Background(), pngHeader(6000, 6000, 16)); !errors.Is(err, errImageSkipped) {
+			t.Errorf("err = %v, want errImageSkipped", err)
+		}
+	})
+
+	t.Run("skips SVGs too large to rasterize", func(t *testing.T) {
+		svg := `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1 1e12"></svg>`
+		if _, err := grayscaleJPEG(context.Background(), []byte(svg)); !errors.Is(err, errImageSkipped) {
+			t.Errorf("err = %v, want errImageSkipped", err)
+		}
+	})
+
+	t.Run("waits for decode memory until the context ends", func(t *testing.T) {
+		if err := decodeMemory.Acquire(context.Background(), maxDecodeBytes); err != nil {
+			t.Fatal(err)
+		}
+		defer decodeMemory.Release(maxDecodeBytes)
+
+		ctx, cancel := context.WithTimeout(context.Background(), 50*time.Millisecond)
+		defer cancel()
+		if _, err := grayscaleJPEG(ctx, pngImage(t, 32, 32, color.Black)); !errors.Is(err, context.DeadlineExceeded) {
+			t.Errorf("err = %v, want context.DeadlineExceeded", err)
+		}
+	})
+}
+
+func pngHeader(width, height uint32, bitDepth byte) []byte {
+	ihdr := binary.BigEndian.AppendUint32(nil, width)
+	ihdr = binary.BigEndian.AppendUint32(ihdr, height)
+	ihdr = append(ihdr, bitDepth, 6, 0, 0, 0)
+
+	chunk := append([]byte("IHDR"), ihdr...)
+	data := []byte("\x89PNG\r\n\x1a\n")
+	data = binary.BigEndian.AppendUint32(data, uint32(len(ihdr)))
+	data = append(data, chunk...)
+	return binary.BigEndian.AppendUint32(data, crc32.ChecksumIEEE(chunk))
+}
+
+type panickingImages map[string][]byte
+
+func (f panickingImages) FetchImage(_ context.Context, u *url.URL) ([]byte, error) {
+	data, ok := f[u.String()]
+	if !ok {
+		panic("decoder bug")
+	}
+	return data, nil
+}
+
+func TestFetchImagesSkipsImagesThatPanic(t *testing.T) {
+	good, _ := url.Parse("https://example.com/good.png")
+	bad, _ := url.Parse("https://example.com/bad.png")
+	fetcher := panickingImages{good.String(): pngImage(t, 32, 32, color.Black)}
+
+	images := fetchImages(context.Background(), fetcher, []*url.URL{bad, good})
+
+	if len(images) != 1 || images[0].source != good {
+		t.Errorf("images = %v, want only %s", images, good)
+	}
 }

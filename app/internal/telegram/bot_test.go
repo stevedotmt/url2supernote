@@ -3,12 +3,14 @@ package telegram
 import (
 	"context"
 	"errors"
+	"fmt"
 	"io"
 	"log/slog"
 	"net/url"
 	"slices"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/stevedotmt/url2supernote/app/internal/delivery"
 )
@@ -141,5 +143,43 @@ func TestBotSendsResultWhenEditFails(t *testing.T) {
 	want := []string{"⏳ https://a.example/1", "✅ First → INBOX"}
 	if got := messenger.texts(); !slices.Equal(got, want) {
 		t.Errorf("messages = %q, want %q", got, want)
+	}
+}
+
+type countingDeliverer struct {
+	mu        sync.Mutex
+	active    int
+	maxActive int
+}
+
+func (c *countingDeliverer) Deliver(_ context.Context, u *url.URL) delivery.Result {
+	c.mu.Lock()
+	c.active++
+	c.maxActive = max(c.maxActive, c.active)
+	c.mu.Unlock()
+
+	time.Sleep(20 * time.Millisecond)
+
+	c.mu.Lock()
+	c.active--
+	c.mu.Unlock()
+	return delivery.Result{URL: u, Outcome: delivery.Delivered}
+}
+
+func TestBotLimitsDeliveriesAcrossUpdates(t *testing.T) {
+	deliverer := &countingDeliverer{}
+	bot := newBot(&fakeMessenger{}, deliverer)
+
+	var wg sync.WaitGroup
+	for i := range 3 {
+		wg.Go(func() {
+			bot.HandleUpdate(context.Background(), ownerMessage(fmt.Sprintf(
+				"https://a.example/%[1]d https://b.example/%[1]d https://c.example/%[1]d https://d.example/%[1]d", i)))
+		})
+	}
+	wg.Wait()
+
+	if deliverer.maxActive > concurrentDeliveries {
+		t.Errorf("%d Deliveries ran at once, want at most %d", deliverer.maxActive, concurrentDeliveries)
 	}
 }
