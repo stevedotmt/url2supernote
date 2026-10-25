@@ -5,7 +5,7 @@
 3. Find your chat ID:
 
    ```sh
-   docker run --rm -e TELEGRAM_BOT_TOKEN=<token> ghcr.io/stevedotmt/url2supernote:<version> telegram whoami
+   docker run --rm -e TELEGRAM_BOT_TOKEN=<token> ghcr.io/stevedotmt/url2supernote@<digest> telegram whoami
    ```
 
    It prints one line per chat that recently messaged the bot:

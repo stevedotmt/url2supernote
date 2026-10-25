@@ -21,9 +21,14 @@ variable "image_name" {
   default     = "stevedotmt/url2supernote"
 }
 
-variable "image_tag" {
-  description = "Release to deploy, e.g. v0.1.0."
+variable "image_digest" {
+  description = "Digest of the release image to deploy, from the GitHub Release notes, e.g. sha256:0123…."
   type        = string
+
+  validation {
+    condition     = can(regex("^sha256:[0-9a-f]{64}$", var.image_digest))
+    error_message = "image_digest must be a sha256 digest such as sha256:<64 hex characters>."
+  }
 }
 
 variable "telegram_owner_chat_id" {

@@ -13,7 +13,7 @@ locals {
     GOOGLE_REFRESH_TOKEN    = "${var.service_name}-google-refresh-token"
   }
 
-  image       = "${var.region}-docker.pkg.dev/${var.project_id}/${google_artifact_registry_repository.ghcr.repository_id}/${var.image_name}:${var.image_tag}"
+  image       = "${var.region}-docker.pkg.dev/${var.project_id}/${google_artifact_registry_repository.ghcr.repository_id}/${var.image_name}@${var.image_digest}"
   service_url = "https://${var.service_name}-${data.google_project.this.number}.${var.region}.run.app"
   webhook_url = "${local.service_url}/telegram/webhook"
 }

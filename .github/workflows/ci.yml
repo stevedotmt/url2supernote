@@ -8,12 +8,18 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   app:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
-      - uses: flox/install-flox-action@v2
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: flox/install-flox-action@5bb9eaaffbeaa699a8251a1ae21ecf4c8e0e37d4 # v2.7.0
       - name: go mod tidy
         run: flox activate -- bash -c 'cd app && go mod tidy -diff'
       - name: Lint
@@ -21,13 +27,16 @@ jobs:
       - name: Test
         run: flox activate -- bash -c 'cd app && go test -race ./...'
       - name: Build image
-        run: flox activate -- bash -c 'cd app && KO_DOCKER_REPO=ghcr.io/${{ github.repository }} ko build --bare --push=false ./cmd/url2supernote'
+        working-directory: app
+        run: flox activate -- ko build --bare --push=false ./cmd/url2supernote
 
   infra:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
-      - uses: flox/install-flox-action@v2
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: flox/install-flox-action@5bb9eaaffbeaa699a8251a1ae21ecf4c8e0e37d4 # v2.7.0
       - name: Format
         run: flox activate -- bash -c 'cd infra && tofu fmt -check -recursive'
       - name: Validate
@@ -36,3 +45,17 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ github.token }}
         run: flox activate -- bash -c 'cd infra/gcp && tflint --init && tflint'
+
+  workflows:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: flox/install-flox-action@5bb9eaaffbeaa699a8251a1ae21ecf4c8e0e37d4 # v2.7.0
+      - name: actionlint
+        run: flox activate -- actionlint
+      - name: zizmor
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: flox activate -- zizmor --format github .github

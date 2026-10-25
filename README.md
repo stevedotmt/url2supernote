@@ -66,7 +66,7 @@ set -a; . ./.env; set +a
 go run ./cmd/url2supernote serve
 ```
 
-Infrastructure lives in [`infra/gcp`](infra/gcp) (`tofu fmt`, `tofu validate`, `tflint`). Golden files for the EPUB tests are refreshed with `go test ./internal/epub -update`. The opt-in Drive integration test runs when `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REFRESH_TOKEN` and `URL2SUPERNOTE_INTEGRATION_DESTINATION` are set.
+Infrastructure lives in [`infra/gcp`](infra/gcp) (`tofu fmt`, `tofu validate`, `tflint`). GitHub Actions workflows are checked with `actionlint` and `zizmor .github`; CI fails on any finding, including actions not pinned to a commit SHA. Golden files for the EPUB tests are refreshed with `go test ./internal/epub -update`. The opt-in Drive integration test runs when `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REFRESH_TOKEN` and `URL2SUPERNOTE_INTEGRATION_DESTINATION` are set.
 
 | Path          |                                                                                                  |
 | ------------- | ------------------------------------------------------------------------------------------------ |
@@ -78,7 +78,15 @@ Infrastructure lives in [`infra/gcp`](infra/gcp) (`tofu fmt`, `tofu validate`, `
 
 ### Releasing
 
-Push a `vX.Y.Z` tag. The release workflow publishes a multi-arch image to `ghcr.io/stevedotmt/url2supernote` and creates a GitHub Release. After the very first release, make the GHCR package public so deployments can pull it anonymously.
+Push a `vX.Y.Z` tag on a commit that is on `main`. The release workflow publishes a multi-arch image to `ghcr.io/stevedotmt/url2supernote`, attaches a signed build provenance attestation, and creates a GitHub Release whose notes give the image digest. Releases are never tagged `latest`; deployments pin the digest. After the very first release, make the GHCR package public so deployments can pull it anonymously.
+
+Only the workflow should publish images, so protect release tags with a repository ruleset (Settings → Rules → Rulesets → New tag ruleset targeting `v*`, restricting creation, update and deletion to maintainers) and keep GHCR package write access limited to this repository's workflow.
+
+The base image in [`app/.ko.yaml`](app/.ko.yaml) is pinned by digest; Dependabot doesn't update it, so refresh it before a release:
+
+```sh
+crane digest cgr.dev/chainguard/static:latest
+```
 
 ## License
 

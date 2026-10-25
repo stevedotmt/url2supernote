@@ -24,7 +24,7 @@ One person's usage stays well within the Cloud Run, Secret Manager and Artifact 
 
 ```sh
 cd infra/gcp
-cp terraform.tfvars.example terraform.tfvars   # fill in project, release tag, chat ID, client ID
+cp terraform.tfvars.example terraform.tfvars   # fill in project, image digest, chat ID, client ID
 tofu init
 ```
 
@@ -54,7 +54,13 @@ On startup the service registers its webhook with Telegram. Send your bot a link
 
 ## Upgrading
 
-Change `image_tag` in `terraform.tfvars` to the new release and run `tofu apply`.
+Each [GitHub Release](https://github.com/stevedotmt/url2supernote/releases) lists its image digest. Verify it was built by this repository's release workflow, set `image_digest` in `terraform.tfvars` to it, and run `tofu apply`:
+
+```sh
+gh attestation verify oci://ghcr.io/stevedotmt/url2supernote@<digest> --repo stevedotmt/url2supernote
+```
+
+Deploying by digest means a tag that is later moved or overwritten can't change what runs.
 
 ## Rotating a secret
 
