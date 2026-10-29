@@ -10,7 +10,10 @@ import (
 	"github.com/stevedotmt/url2supernote/app/internal/delivery"
 )
 
-const concurrentDeliveries = 3
+const (
+	concurrentDeliveries = 3
+	maxLinksPerMessage   = 5
+)
 
 // PrivateChat is the Chat.Type of a one-to-one chat, whose ID equals the other participant's user ID.
 const PrivateChat = "private"
@@ -56,6 +59,11 @@ func (b *Bot) HandleUpdate(ctx context.Context, update Update) {
 	if len(urls) == 0 {
 		b.reply(ctx, fmt.Sprintf("Send me a link and I'll deliver the article to your Supernote's %s.", b.DestinationName))
 		return
+	}
+
+	if ignored := len(urls) - maxLinksPerMessage; ignored > 0 {
+		urls = urls[:maxLinksPerMessage]
+		b.reply(ctx, fmt.Sprintf("⚠️ I deliver at most %d links per message; ignoring the last %d. Send them again in another message.", maxLinksPerMessage, ignored))
 	}
 
 	b.slotsOnce.Do(func() { b.slots = make(chan struct{}, concurrentDeliveries) })
