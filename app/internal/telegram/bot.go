@@ -12,6 +12,9 @@ import (
 
 const concurrentDeliveries = 3
 
+// PrivateChat is the Chat.Type of a one-to-one chat, whose ID equals the other participant's user ID.
+const PrivateChat = "private"
+
 // Deliverer runs one Delivery per Article URL.
 type Deliverer interface {
 	Deliver(ctx context.Context, u *url.URL) delivery.Result
@@ -37,14 +40,15 @@ type Bot struct {
 	slots     chan struct{}
 }
 
-// HandleUpdate processes one update. Updates from any chat other than the Owner's are ignored.
+// HandleUpdate processes one update. Only messages the Owner sent in their private chat with the bot are
+// handled; anything from another chat, sender or chat type is ignored.
 func (b *Bot) HandleUpdate(ctx context.Context, update Update) {
 	msg := update.Message
 	if msg == nil {
 		return
 	}
-	if msg.Chat.ID != b.OwnerChatID {
-		b.Logger.Warn("ignored message from a chat that is not the Owner's", "chat_id", msg.Chat.ID)
+	if !b.fromOwner(msg) {
+		b.Logger.Warn("ignored message that is not from the Owner's private chat", "chat_id", msg.Chat.ID, "chat_type", msg.Chat.Type)
 		return
 	}
 
@@ -64,6 +68,10 @@ func (b *Bot) HandleUpdate(ctx context.Context, update Update) {
 		})
 	}
 	wg.Wait()
+}
+
+func (b *Bot) fromOwner(msg *Message) bool {
+	return msg.Chat.Type == PrivateChat && msg.Chat.ID == b.OwnerChatID && msg.From != nil && msg.From.ID == b.OwnerChatID
 }
 
 func (b *Bot) deliver(ctx context.Context, u *url.URL) {

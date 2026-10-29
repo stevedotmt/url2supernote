@@ -21,11 +21,16 @@ type Update struct {
 
 type Message struct {
 	MessageID       int64    `json:"message_id"`
+	From            *User    `json:"from,omitempty"`
 	Chat            Chat     `json:"chat"`
 	Text            string   `json:"text,omitempty"`
 	Entities        []Entity `json:"entities,omitempty"`
 	Caption         string   `json:"caption,omitempty"`
 	CaptionEntities []Entity `json:"caption_entities,omitempty"`
+}
+
+type User struct {
+	ID int64 `json:"id"`
 }
 
 type Chat struct {

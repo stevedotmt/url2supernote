@@ -73,6 +73,8 @@ func Load(getenv func(string) string) (Config, error) {
 		id, err := strconv.ParseInt(chatID, 10, 64)
 		if err != nil {
 			problems = append(problems, fmt.Errorf("TELEGRAM_OWNER_CHAT_ID must be an integer: %q", chatID))
+		} else if id <= 0 {
+			problems = append(problems, fmt.Errorf("TELEGRAM_OWNER_CHAT_ID must be the ID of your private chat with the bot, which is positive; group and channel IDs are not allowed: %q", chatID))
 		}
 		cfg.TelegramOwnerChatID = id
 	}

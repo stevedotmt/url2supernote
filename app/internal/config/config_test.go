@@ -81,6 +81,16 @@ func TestLoadReportsEveryProblem(t *testing.T) {
 	}
 }
 
+func TestLoadRejectsNonPrivateOwnerChatIDs(t *testing.T) {
+	for _, id := range []string{"-1001234567890", "-42", "0"} {
+		_, err := config.Load(env(map[string]string{"TELEGRAM_OWNER_CHAT_ID": id}))
+
+		if err == nil || !strings.Contains(err.Error(), "TELEGRAM_OWNER_CHAT_ID must be the ID of your private chat") {
+			t.Errorf("TELEGRAM_OWNER_CHAT_ID=%s: err = %v", id, err)
+		}
+	}
+}
+
 func TestLoadRejectsUnknownModes(t *testing.T) {
 	_, err := config.Load(env(map[string]string{"TELEGRAM_MODE": "carrier-pigeon", "SYNC_ENGINE": "supernote-cloud"}))
 

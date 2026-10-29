@@ -36,8 +36,8 @@ variable "telegram_owner_chat_id" {
   type        = string
 
   validation {
-    condition     = can(regex("^-?[0-9]+$", var.telegram_owner_chat_id))
-    error_message = "telegram_owner_chat_id must be an integer."
+    condition     = can(regex("^[1-9][0-9]*$", var.telegram_owner_chat_id))
+    error_message = "telegram_owner_chat_id must be the positive ID of your private chat with the bot."
   }
 }
 
