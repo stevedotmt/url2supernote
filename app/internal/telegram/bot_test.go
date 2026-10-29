@@ -8,6 +8,7 @@ import (
 	"log/slog"
 	"net/url"
 	"slices"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -142,6 +143,28 @@ func TestBotIgnoresMessagesThatAreNotFromTheOwnersPrivateChat(t *testing.T) {
 				t.Errorf("replied %q", messenger.texts())
 			}
 		})
+	}
+}
+
+func TestBotDeliversAtMostFiveLinksPerMessage(t *testing.T) {
+	messenger := &fakeMessenger{}
+	results := fakeDeliverer{}
+	var links []string
+	for i := range 8 {
+		link := fmt.Sprintf("https://a.example/%d", i)
+		links = append(links, link)
+		results[link] = delivery.Result{Outcome: delivery.Delivered, Title: fmt.Sprintf("Article %d", i)}
+	}
+
+	newBot(messenger, results).HandleUpdate(context.Background(), ownerMessage(strings.Join(links, " ")))
+
+	want := []string{
+		"⚠️ I deliver at most 5 links per message; ignoring the last 3. Send them again in another message.",
+		"✅ Article 0 → INBOX", "✅ Article 1 → INBOX", "✅ Article 2 → INBOX", "✅ Article 3 → INBOX", "✅ Article 4 → INBOX",
+	}
+	slices.Sort(want)
+	if got := messenger.texts(); !slices.Equal(got, want) {
+		t.Errorf("messages = %q, want %q", got, want)
 	}
 }
 
