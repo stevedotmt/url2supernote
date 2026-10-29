@@ -4,6 +4,7 @@ import (
 	"archive/zip"
 	"bytes"
 	"context"
+	"encoding/base64"
 	"encoding/binary"
 	"encoding/xml"
 	"errors"
@@ -327,6 +328,56 @@ func TestGrayscaleJPEG(t *testing.T) {
 		svg := `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1 1e12"></svg>`
 		if _, err := grayscaleJPEG(context.Background(), []byte(svg)); !errors.Is(err, errImageSkipped) {
 			t.Errorf("err = %v, want errImageSkipped", err)
+		}
+	})
+
+	t.Run("does not render files from the working directory into SVGs", func(t *testing.T) {
+		dir := t.TempDir()
+		if err := os.WriteFile(filepath.Join(dir, "secret.png"), pngImage(t, 64, 64, color.Black), 0o600); err != nil {
+			t.Fatal(err)
+		}
+		t.Chdir(dir)
+
+		for _, href := range []string{"secret.png", " secret.png", "./secret.png", "file:///secret.png", "http://example.com/a.png"} {
+			for _, attr := range []string{"xlink:href", "href"} {
+				svg := `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="64" height="64"><image ` + attr + `="` + href + `" width="64" height="64"/></svg>`
+				if _, err := grayscaleJPEG(context.Background(), []byte(svg)); !errors.Is(err, errImageSkipped) {
+					t.Errorf("%s=%q: err = %v, want errImageSkipped", attr, href, err)
+				}
+			}
+		}
+	})
+
+	t.Run("skips SVGs that declare entities", func(t *testing.T) {
+		svg := `<?xml version="1.0"?><!DOCTYPE svg [<!ENTITY a "aaaa">]><svg xmlns="http://www.w3.org/2000/svg" width="64" height="64"><text>&a;</text></svg>`
+		if _, err := grayscaleJPEG(context.Background(), []byte(svg)); !errors.Is(err, errImageSkipped) {
+			t.Errorf("err = %v, want errImageSkipped", err)
+		}
+	})
+
+	t.Run("renders SVGs that reference only themselves and data URIs", func(t *testing.T) {
+		svg := `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="64" height="64"><defs><rect id="r" width="32" height="32"/></defs><use xlink:href="#r"/><image href="data:image/png;base64,` + base64.StdEncoding.EncodeToString(pngImage(t, 8, 8, color.Black)) + `" x="32" y="32" width="32" height="32"/></svg>`
+		if _, err := grayscaleJPEG(context.Background(), []byte(svg)); err != nil {
+			t.Errorf("err = %v", err)
+		}
+	})
+
+	t.Run("stops rendering an SVG when the context ends", func(t *testing.T) {
+		if _, err := grayscaleJPEG(context.Background(), []byte(`<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"><rect width="10" height="10"/></svg>`)); err != nil {
+			t.Fatal(err)
+		}
+		slow := `<svg xmlns="http://www.w3.org/2000/svg" width="4000" height="4000"><filter id="f" x="0" y="0" width="1" height="1"><feMorphology operator="dilate" radius="2000"/><feGaussianBlur stdDeviation="500"/><feMorphology operator="erode" radius="2000"/></filter><rect width="4000" height="4000" filter="url(#f)"/></svg>`
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+		defer cancel()
+
+		start := time.Now()
+		_, err := grayscaleJPEG(ctx, []byte(slow))
+
+		if err == nil || time.Since(start) > 5*time.Second {
+			t.Errorf("returned after %s with err = %v, want an error shortly after the context ended", time.Since(start), err)
+		}
+		if _, err := grayscaleJPEG(context.Background(), []byte(`<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"><rect width="10" height="10"/></svg>`)); err != nil {
+			t.Errorf("next SVG: err = %v", err)
 		}
 	})
 

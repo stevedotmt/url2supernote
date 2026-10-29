@@ -133,11 +133,11 @@ func fetchGrayscaleJPEG(ctx context.Context, fetcher ImageFetcher, source *url.U
 type sourceImage struct {
 	width, height int
 	bytesPerPixel int64
-	decode        func() (image.Image, error)
+	decode        func(ctx context.Context) (image.Image, error)
 }
 
 func grayscaleJPEG(ctx context.Context, raw []byte) ([]byte, error) {
-	src, err := inspectImage(raw)
+	src, err := inspectImage(ctx, raw)
 	if err != nil {
 		return nil, err
 	}
@@ -161,7 +161,7 @@ func grayscaleJPEG(ctx context.Context, raw []byte) ([]byte, error) {
 	}
 	defer decodeMemory.Release(cost)
 
-	decoded, err := src.decode()
+	decoded, err := src.decode(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -177,9 +177,9 @@ func grayscaleJPEG(ctx context.Context, raw []byte) ([]byte, error) {
 	return out.Bytes(), nil
 }
 
-func inspectImage(raw []byte) (sourceImage, error) {
+func inspectImage(ctx context.Context, raw []byte) (sourceImage, error) {
 	if isSVG(raw) {
-		return inspectSVG(raw)
+		return inspectSVG(ctx, raw)
 	}
 
 	cfg, _, err := image.DecodeConfig(bytes.NewReader(raw))
@@ -190,7 +190,7 @@ func inspectImage(raw []byte) (sourceImage, error) {
 		width:         cfg.Width,
 		height:        cfg.Height,
 		bytesPerPixel: bytesPerPixel(cfg.ColorModel),
-		decode: func() (image.Image, error) {
+		decode: func(context.Context) (image.Image, error) {
 			img, _, err := image.Decode(bytes.NewReader(raw))
 			return img, err
 		},
