@@ -87,7 +87,7 @@ func newBot(m Messenger, d Deliverer) *Bot {
 }
 
 func ownerMessage(text string) Update {
-	return Update{Message: &Message{Chat: Chat{ID: ownerChatID}, Text: text}}
+	return Update{Message: &Message{From: &User{ID: ownerChatID}, Chat: Chat{ID: ownerChatID, Type: PrivateChat}, Text: text}}
 }
 
 func TestBotReportsEachDelivery(t *testing.T) {
@@ -120,6 +120,28 @@ func TestBotIgnoresOtherChats(t *testing.T) {
 
 	if len(messenger.sent) != 0 {
 		t.Errorf("sent %q to a stranger", messenger.texts())
+	}
+}
+
+func TestBotIgnoresMessagesThatAreNotFromTheOwnersPrivateChat(t *testing.T) {
+	tests := map[string]*Message{
+		"another member of a group chat with the owner's ID": {From: &User{ID: 7}, Chat: Chat{ID: ownerChatID, Type: "group"}},
+		"owner ID reused as a group":                         {From: &User{ID: ownerChatID}, Chat: Chat{ID: ownerChatID, Type: "supergroup"}},
+		"another user in the owner's chat":                   {From: &User{ID: 7}, Chat: Chat{ID: ownerChatID, Type: PrivateChat}},
+		"no sender":                                          {Chat: Chat{ID: ownerChatID, Type: PrivateChat}},
+		"channel post":                                       {Chat: Chat{ID: ownerChatID, Type: "channel"}},
+	}
+	for name, msg := range tests {
+		t.Run(name, func(t *testing.T) {
+			messenger := &fakeMessenger{}
+			msg.Text = "https://a.example"
+
+			newBot(messenger, fakeDeliverer{}).HandleUpdate(context.Background(), Update{Message: msg})
+
+			if len(messenger.sent) != 0 {
+				t.Errorf("replied %q", messenger.texts())
+			}
+		})
 	}
 }
 

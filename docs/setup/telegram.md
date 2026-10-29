@@ -14,6 +14,6 @@
    123456789	private	Ada Lovelace (@ada)
    ```
 
-   The number is `TELEGRAM_OWNER_CHAT_ID`. The bot ignores every other chat.
+   The number is `TELEGRAM_OWNER_CHAT_ID`. It must be a `private` chat, so a positive number; the bot refuses to start with a group or channel ID, and answers only messages you sent yourself in that chat.
 
 Run `telegram whoami` before deploying. Once a webhook is registered, Telegram stops serving updates to it and the command fails with a `409 Conflict`; running the service in polling mode removes the webhook again.
