@@ -7,7 +7,7 @@ require (
 	github.com/kanrichan/resvg-go v0.0.2-0.20260124063605-1b2ace355216
 	github.com/tetratelabs/wazero v1.11.0
 	golang.org/x/image v0.47.0
-	golang.org/x/net v0.61.0
+	golang.org/x/net v0.62.0
 	golang.org/x/oauth2 v0.37.0
 	golang.org/x/sync v0.24.0
 	google.golang.org/api v0.305.0
