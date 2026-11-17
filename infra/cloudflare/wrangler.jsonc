@@ -1,0 +1,15 @@
+{
+  "name": "url2supernote-site",
+  "compatibility_date": "2026-10-01",
+  "assets": {
+    "directory": "../../site"
+  },
+  "routes": [
+    {
+      "pattern": "url2supernote.steve.mt",
+      "custom_domain": true
+    }
+  ],
+  "workers_dev": false,
+  "preview_urls": false
+}

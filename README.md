@@ -74,13 +74,15 @@ go run ./cmd/url2supernote serve
 
 Infrastructure lives in [`infra/gcp`](infra/gcp) (`tofu fmt`, `tofu validate`, `tflint`). GitHub Actions workflows are checked with `actionlint` and `zizmor .github`; CI fails on any finding, including actions not pinned to a commit SHA. Golden files for the EPUB tests are refreshed with `go test ./internal/epub -update`. The opt-in Drive integration test runs when `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REFRESH_TOKEN` and `GOOGLE_DRIVE_FOLDER_ID` are set.
 
-| Path          |                                                                                                  |
-| ------------- | ------------------------------------------------------------------------------------------------ |
-| `app/`        | Go module: `cmd/url2supernote` and `internal/{delivery,extract,epub,syncengine,telegram,config}` |
-| `infra/gcp/`  | OpenTofu module for Cloud Run                                                                    |
-| `docs/setup/` | Owner guides                                                                                     |
-| `docs/adr/`   | Architecture decisions                                                                           |
-| `GLOSSARY.md` | Domain language                                                                                  |
+| Path                |                                                                                                  |
+| ------------------- | ------------------------------------------------------------------------------------------------ |
+| `app/`              | Go module: `cmd/url2supernote` and `internal/{delivery,extract,epub,syncengine,telegram,config}` |
+| `infra/gcp/`        | OpenTofu module for Cloud Run                                                                    |
+| `infra/cloudflare/` | Wrangler config that deploys `site/`                                                             |
+| `site/`             | Static home page and privacy policy for the OAuth consent screen                                 |
+| `docs/setup/`       | Owner guides                                                                                     |
+| `docs/adr/`         | Architecture decisions                                                                           |
+| `GLOSSARY.md`       | Domain language                                                                                  |
 
 ### Releasing
 
