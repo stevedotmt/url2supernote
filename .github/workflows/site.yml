@@ -1,0 +1,26 @@
+name: Site
+
+on:
+  pull_request:
+    paths: [site/**, infra/cloudflare/**, .github/workflows/site.yml]
+  push:
+    branches: [main]
+    paths: [site/**, infra/cloudflare/**, .github/workflows/site.yml]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: site-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: flox/install-flox-action@5bb9eaaffbeaa699a8251a1ae21ecf4c8e0e37d4 # v2.7.0
+      - name: Dry-run deploy
+        run: flox activate -- bash -c 'cd infra/cloudflare && wrangler deploy --dry-run'

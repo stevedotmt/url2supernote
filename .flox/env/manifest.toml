@@ -15,6 +15,7 @@ docker.pkg-path = "docker"
 crane.pkg-path = "crane"
 zizmor.pkg-path = "zizmor"
 actionlint.pkg-path = "actionlint"
+wrangler.pkg-path = "wrangler"
 
 [vars]
 GOTOOLCHAIN = "local"

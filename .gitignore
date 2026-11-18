@@ -8,3 +8,4 @@ infra/**/*.tfstate.*
 infra/**/*.tfvars
 infra/**/backend.tf
 !infra/**/*.tfvars.example
+infra/cloudflare/.wrangler/

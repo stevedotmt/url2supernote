@@ -11,7 +11,7 @@ On the Supernote: **Settings → Sync → Google Drive**, sign in, and sync once
 In the [Google Cloud console](https://console.cloud.google.com/), using the project you will deploy to (or any project):
 
 1. **APIs & Services → Library**: enable the **Google Drive API** and the **Google Picker API**.
-2. **Google Auth Platform → Branding**: set an app name (e.g. `url2supernote`) and your email.
+2. **Google Auth Platform → Branding**: set an app name (e.g. `url2supernote`) and your email. Publishing to production also requires an application home page and privacy policy link on a domain you own, and that domain under **Authorized domains**. Use your own pages, or [host the ones in `site/`](site.md): home page `https://<your host>/`, privacy policy `https://<your host>/privacy/`. Google rejects a privacy policy URL equal to the home page URL.
 3. **Audience**: choose **External**, then **Publish app** so the status is **In production**. In _Testing_ status Google expires refresh tokens after 7 days. The app only asks for per-file access, so it needs no verification.
 4. **Clients → Create client**: application type **Desktop app**. Keep the client ID (`GOOGLE_CLIENT_ID`) and client secret (`GOOGLE_CLIENT_SECRET`).
 

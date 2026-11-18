@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>url2supernote: send web articles to your Supernote</title>
+    <meta
+      name="description"
+      content="url2supernote turns links you send to a Telegram bot into EPUB files in your Google Drive, so they sync to your Supernote for offline reading."
+    />
+    <link rel="icon" href="/logo.png" />
+    <link rel="stylesheet" href="/style.css" />
+  </head>
+  <body>
+    <header>
+      <img src="/logo.png" alt="url2supernote logo" />
+      <h1>url2supernote</h1>
+      <p class="tagline">
+        Send a link to your Telegram bot; a clean EPUB of the article appears
+        on your Supernote.
+      </p>
+      <nav>
+        <ul>
+          <li><a href="/privacy/">Privacy policy</a></li>
+          <li>
+            <a href="https://github.com/stevedotmt/url2supernote">Source code</a>
+          </li>
+        </ul>
+      </nav>
+    </header>
+
+    <main>
+      <h2>What it does</h2>
+      <p>
+        url2supernote is open-source software that fetches a web article,
+        extracts the readable text and images, and packs them into an EPUB
+        tuned for e-ink. The EPUB is saved to a folder in your Google Drive. Your
+        <a href="https://supernote.com/">Supernote</a> already syncs with Google
+        Drive, so the article shows up on the device a few moments later, ready
+        to read offline.
+      </p>
+
+      <pre><code>Telegram ──link──▶ url2supernote ──EPUB──▶ Google Drive /Supernote/INBOX ──sync──▶ Supernote</code></pre>
+
+      <h2>Self-hosted, one person per deployment</h2>
+      <p>
+        There is no shared service and no accounts. Each person runs their own
+        copy, with their own Telegram bot and their own Google Cloud OAuth
+        client, so Google Drive credentials never pass through anyone else's
+        server. The author of url2supernote does not operate a service that
+        receives your data.
+      </p>
+
+      <h2>Why it asks for Google access</h2>
+      <p>
+        To place EPUB files in your Drive, url2supernote asks for one Google
+        OAuth scope:
+        <code>https://www.googleapis.com/auth/drive.file</code>. During setup
+        you choose a single folder, normally the Supernote's <code>INBOX</code>,
+        in the Google Picker. With this scope the app can:
+      </p>
+      <ul>
+        <li>add EPUB files to the folder you picked;</li>
+        <li>
+          check whether a file with the same name already exists in that
+          folder, so an article is never delivered twice.
+        </li>
+      </ul>
+      <p>
+        It cannot read, list, change or delete any other file in your Drive.
+        It also refuses to start if given a token with broader access.
+      </p>
+      <p>
+        How the app handles that access is described in the
+        <a href="/privacy/">privacy policy</a>.
+      </p>
+
+      <h2>Set it up</h2>
+      <p>
+        Step-by-step guides for creating the Telegram bot, authorizing Google
+        Drive and deploying, either on Google Cloud Run or anywhere Docker runs,
+        are in the
+        <a href="https://github.com/stevedotmt/url2supernote#set-up"
+          >project README</a
+        >.
+      </p>
+    </main>
+
+    <footer>
+      <p>
+        url2supernote is developed by Steve Xuereb and released under the MIT
+        license. Contact:
+        <a href="mailto:url2supernote@steve.mt">url2supernote@steve.mt</a>.
+      </p>
+      <p><a href="/privacy/">Privacy policy</a></p>
+    </footer>
+  </body>
+</html>
